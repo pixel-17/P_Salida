@@ -18,8 +18,8 @@
 
         <x-dropdown align="right" width="w-64">
             <x-slot name="trigger">
-                <button class="inline-flex items-center gap-2 pl-1.5 pr-2.5 sm:pr-3 py-1.5 rounded-full border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-colors">
-                    <span class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                <button class="inline-flex items-center gap-2 pl-1.5 pr-2.5 sm:pr-3 py-1.5 rounded-full border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-colors">
+                    <span class="w-8 h-8 rounded-full avatar-mark flex items-center justify-center text-white text-xs font-bold shrink-0">
                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                     </span>
                     <span class="hidden sm:block text-sm font-medium text-gray-700 max-w-[10rem] truncate">{{ Auth::user()->name }}</span>
@@ -28,7 +28,7 @@
             </x-slot>
 
             <x-slot name="content">
-                <div class="px-4 py-3 border-b border-slate-100">
+                <div class="px-4 py-3 border-b border-gray-100">
                     <p class="text-sm font-semibold text-gray-800 truncate">{{ Auth::user()->name }}</p>
                     <p class="text-xs text-gray-500 truncate">{{ Auth::user()->email }}</p>
                 </div>

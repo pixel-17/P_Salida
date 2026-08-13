@@ -1,6 +1,6 @@
 <header class="mobile-topbar">
     <a href="{{ route('dashboard') }}" class="flex items-center gap-2 min-w-0">
-        <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center shrink-0">
+        <div class="w-8 h-8 rounded-lg sidebar-brand-mark flex items-center justify-center shrink-0">
             <x-application-logo class="block h-4 w-auto fill-current text-white" />
         </div>
         <span class="font-bold text-gray-800 text-[15px] truncate">{{ $tituloTopbar ?? 'Papeletas' }}</span>
@@ -23,14 +23,14 @@
         <x-dropdown align="right" width="w-56">
             <x-slot name="trigger">
                 <button class="icon-btn" aria-label="Cuenta">
-                    <span class="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold">
+                    <span class="w-7 h-7 rounded-full avatar-mark flex items-center justify-center text-white text-xs font-bold">
                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                     </span>
                 </button>
             </x-slot>
 
             <x-slot name="content">
-                <div class="px-4 py-3 border-b border-slate-100">
+                <div class="px-4 py-3 border-b border-gray-100">
                     <p class="text-sm font-semibold text-gray-800 truncate">{{ Auth::user()->name }}</p>
                     <p class="text-xs text-gray-500 truncate">{{ Auth::user()->email }}</p>
                 </div>

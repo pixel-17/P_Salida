@@ -20,12 +20,12 @@
 
 <aside class="app-sidebar" :class="sidebarAbierto && 'is-open'">
     <div class="sidebar-brand">
-        <div class="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center shrink-0">
+        <div class="w-9 h-9 rounded-xl sidebar-brand-mark flex items-center justify-center shrink-0">
             <x-application-logo class="block h-5 w-auto fill-current text-white" />
         </div>
         <div class="min-w-0">
             <p class="text-sm font-bold text-white leading-tight truncate">Papeletas</p>
-            <p class="text-xs text-gray-400 truncate">{{ $rolLabel }}</p>
+            <p class="text-xs text-gray-500 truncate">{{ $rolLabel }}</p>
         </div>
         <button @click="sidebarAbierto = false" class="ml-auto text-gray-400 hover:text-white lg:hidden">
             <x-icon name="close" class="w-5 h-5" />
