@@ -10,6 +10,8 @@ use App\Models\Area;
 use App\Models\Estado;
 use App\Models\HistorialPapeleta;
 use App\Models\Papeleta;
+use App\Support\PapeletaEstadisticas;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -161,6 +163,89 @@ class PapeletaController extends Controller
         }, $nombreArchivo, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    /**
+     * Boleta individual en PDF: mismo dato que ve el trabajador/jefe/RRHH en
+     * pantalla (papeletas.show), pero en formato imprimible con espacio
+     * para firmas físicas. Usa la misma Policy que la vista de detalle.
+     */
+    public function pdfBoleta(Papeleta $papeleta)
+    {
+        $this->authorize('ver', $papeleta);
+
+        $papeleta->load([
+            'trabajador', 'jefe', 'area', 'sede', 'motivo', 'estado',
+            'marcaciones.registradoPor', 'historial.usuario',
+        ]);
+
+        $pdf = Pdf::loadView('papeletas.pdf.boleta', compact('papeleta'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream("{$papeleta->codigo}.pdf");
+    }
+
+    /**
+     * Reporte gerencial en PDF: mismos filtros y restricción de rol que
+     * exportar() (solo RRHH), pero con KPIs de cabecera para lectura rápida
+     * en vez de solo la tabla cruda que da el Excel.
+     */
+    public function pdfReporte(Request $request): mixed
+    {
+        $filtros = $request->only(['buscar', 'estado_id', 'area_id', 'desde', 'hasta']);
+        $vista = $request->get('vista', 'todas') === 'pendientes' ? 'pendientes' : 'todas';
+
+        $base = match (true) {
+            $vista === 'pendientes' && $request->user()->hasRole(RolUsuario::RRHH)
+                => Papeleta::pendientesDeRrhh(),
+            default => Papeleta::query(),
+        };
+
+        $query = $base->conFiltros($filtros);
+        $total = (clone $query)->count();
+
+        if ($total > self::MAX_FILAS_EXPORTAR) {
+            return back()->withErrors([
+                'exportar' => 'Hay '.number_format($total).' papeletas con esos filtros para el reporte PDF; el máximo por descarga es '
+                    .number_format(self::MAX_FILAS_EXPORTAR).'. Acota el rango de fechas o el área e inténtalo de nuevo.',
+            ]);
+        }
+
+        $papeletas = $query
+            ->with(['trabajador', 'area', 'motivo', 'estado'])
+            ->latest('fecha_salida')
+            ->get();
+
+        $kpis = [
+            'total' => $papeletas->count(),
+            'finalizadas' => $papeletas->where('estado.codigo', EstadoPapeleta::FINALIZADO->value)->count(),
+            'rechazadas_vencidas' => $papeletas->whereIn('estado.codigo', [
+                EstadoPapeleta::RECHAZADO->value,
+                EstadoPapeleta::VENCIDA->value,
+                EstadoPapeleta::CANCELADO->value,
+            ])->count(),
+            'tiempo_promedio_aprobacion' => PapeletaEstadisticas::tiempoPromedioAprobacion($papeletas->pluck('id')),
+        ];
+
+        $etiquetas = [
+            'buscar' => 'Búsqueda',
+            'estado_id' => 'Estado',
+            'area_id' => 'Área',
+            'desde' => 'Desde',
+            'hasta' => 'Hasta',
+        ];
+        $filtrosLegibles = collect($filtros)
+            ->filter()
+            ->map(fn ($valor, $clave) => ($etiquetas[$clave] ?? $clave).': '.$valor)
+            ->values()
+            ->all();
+
+        $pdf = Pdf::loadView('papeletas.pdf.reporte', compact('papeletas', 'kpis', 'filtrosLegibles'))
+            ->setPaper('a4', 'landscape');
+
+        $nombreArchivo = 'reporte_papeletas_'.now()->format('Y-m-d_His').'.pdf';
+
+        return $pdf->stream($nombreArchivo);
     }
 
     public function create(): View

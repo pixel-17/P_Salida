@@ -193,5 +193,6 @@
     @endif
 
     <script src="{{ asset('js/push.js') }}"></script>
+    @stack('scripts')
 </body>
 </html>

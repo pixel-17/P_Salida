@@ -1,6 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-bold text-2xl text-gray-800 tracking-tight">{{ $papeleta->codigo }}</h2>
+        <div class="flex justify-between items-center flex-wrap gap-3">
+            <h2 class="font-bold text-2xl text-gray-800 tracking-tight">{{ $papeleta->codigo }}</h2>
+            <a href="{{ route('papeletas.pdf', $papeleta) }}"
+               target="_blank"
+               class="btn-glass text-white shadow-glass !px-4 !py-2" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6 12l-3-3m0 0l-3 3m3-3v6" />
+                </svg>
+                Descargar PDF
+            </a>
+        </div>
     </x-slot>
 
     @php
