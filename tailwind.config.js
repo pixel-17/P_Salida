@@ -9,48 +9,38 @@ export default {
         './resources/views/**/*.blade.php',
     ],
 
-    darkMode: 'class',
-
     theme: {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            // "brand" nunca estaba definido acá pese a usarse en más de
+            // 25 vistas (botones, avatares, badges, iconos activos del
+            // sidebar) — Tailwind descartaba esas clases en silencio y
+            // esos elementos quedaban sin color de fondo/texto (blancos).
+            // Los tonos 300–700 son exactamente los hex ya hardcodeados
+            // en resources/css/app.css (botón primario, foco de inputs,
+            // ícono activo del sidebar), para no cambiar la identidad
+            // visual existente — solo hacerla real en las utilidades.
             colors: {
-                // Acento de marca: el único color vivo sobre una interfaz que,
-                // fuera de él, es enteramente degradados de negro/gris.
                 brand: {
-                    50: '#eef2ff',
-                    100: '#e0e7ff',
-                    200: '#c7d2fe',
-                    300: '#a5b4fc',
-                    400: '#818cf8',
-                    500: '#6366f1',
-                    600: '#4f46e5',
-                    700: '#4338ca',
-                    800: '#3730a3',
-                    900: '#312e81',
-                },
-                // Escala neutra fría usada por las superficies oscuras
-                // (sidebar, tarjetas, fondo) para lograr degradados de negro
-                // realmente neutros, no azulados.
-                ink: {
-                    50: '#f7f7f8',
-                    100: '#ececee',
-                    200: '#d3d3d7',
-                    300: '#a8a8b0',
-                    400: '#75757e',
-                    500: '#4d4d55',
-                    600: '#333338',
-                    700: '#232326',
-                    800: '#18181a',
-                    900: '#0c0c0d',
-                    950: '#000000',
+                    50: '#eef3ff',
+                    100: '#dde7fe',
+                    200: '#b8cdfd',
+                    300: '#93b8ff',
+                    400: '#5e91ff',
+                    500: '#3b6cf6',
+                    600: '#2549ea',
+                    700: '#1e39d1',
+                    800: '#1a2fb0',
+                    900: '#16268f',
+                    950: '#0c1550',
                 },
             },
             boxShadow: {
-                'glass-lg': '0 20px 45px -12px rgba(0, 0, 0, 0.35)',
-                glow: '0 0 0 1px rgba(99, 102, 241, 0.4), 0 8px 24px -4px rgba(99, 102, 241, 0.45)',
+                // Usada en tarjetas de acceso rápido / avatares con
+                // degradado (dashboard admin); tampoco estaba definida.
+                glass: '0 4px 14px -4px rgba(37, 73, 234, 0.35)',
             },
         },
     },

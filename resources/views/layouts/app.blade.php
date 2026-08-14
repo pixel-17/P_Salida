@@ -70,6 +70,7 @@
                         'label' => 'Catálogos',
                         'items' => [
                             ['label' => 'Usuarios', 'route' => route('users.index'), 'active' => 'users.*', 'icon' => 'users'],
+                            ['label' => 'Trabajadores', 'route' => route('equipo.index'), 'active' => 'equipo.*', 'icon' => 'user-circle'],
                             ['label' => 'Áreas', 'route' => route('areas.index'), 'active' => 'areas.*', 'icon' => 'building'],
                             ['label' => 'Cargos', 'route' => route('cargos.index'), 'active' => 'cargos.*', 'icon' => 'briefcase'],
                             ['label' => 'Sedes', 'route' => route('sedes.index'), 'active' => 'sedes.*', 'icon' => 'map-pin'],
@@ -106,6 +107,7 @@
                         'items' => [
                             ['label' => 'Por aprobar', 'route' => route('papeletas.index', ['vista' => 'pendientes']), 'active' => $vistaActual === 'pendientes', 'icon' => 'inbox', 'badge' => $pendientesJefe],
                             ['label' => 'Todas', 'route' => route('papeletas.index', ['vista' => 'todas']), 'active' => $vistaActual === 'todas' || request()->routeIs('papeletas.show'), 'icon' => 'list'],
+                            ['label' => 'Mis trabajadores', 'route' => route('equipo.index'), 'active' => 'equipo.*', 'icon' => 'user-circle'],
                         ],
                     ],
                 ];

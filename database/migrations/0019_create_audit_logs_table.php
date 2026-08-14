@@ -23,7 +23,6 @@ return new class extends Migration
             $table->unsignedBigInteger('auditable_id');
             $table->string('auditable_label')->nullable()->comment('Snapshot legible del recurso, ej. nombre del área, para no depender de que el registro siga existiendo');
             $table->json('cambios')->nullable()->comment('Solo los campos que cambiaron: {campo: [antes, despues]}');
-            $table->string('ip', 45)->nullable();
             $table->timestamp('created_at')->nullable();
 
             $table->index(['auditable_type', 'auditable_id'], 'idx_audit_auditable');

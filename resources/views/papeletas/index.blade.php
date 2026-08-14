@@ -72,7 +72,11 @@
     {{-- Toggle Pendientes / Todas — solo tiene sentido para Jefe/RRHH --}}
     @if(auth()->user()->esJefe() || auth()->user()->esRrhh())
         <div class="flex gap-1 mb-4 glass p-1 rounded-xl w-fit">
-            <a href="{{ route('papeletas.index', array_merge($filtros, ['vista' => 'pendientes'])) }}"
+            {{-- Al volver a "Pendientes" se descarta cualquier estado_id que
+            venías arrastrando desde "Todas": esa bandeja ya está fijada a un
+            único estado (SOLICITADO para jefe, APROBADO_JEFE para RRHH), así
+            que combinarla con otro estado_id siempre daba una lista vacía. --}}
+            <a href="{{ route('papeletas.index', array_merge(collect($filtros)->except('estado_id')->all(), ['vista' => 'pendientes'])) }}"
                class="text-sm px-4 py-1.5 rounded-lg font-semibold transition-all duration-200 {{ $vista === 'pendientes' ? 'bg-white shadow-sm text-brand-700' : 'text-gray-500 hover:text-gray-700' }}">
                 Pendientes
             </a>
@@ -83,8 +87,16 @@
         </div>
     @endif
 
-    {{-- Filtros rápidos de estado --}}
-    @if($estados->isNotEmpty())
+    {{-- Filtros rápidos de estado — para Jefe/RRHH solo se muestran en
+    "Todas": en "Pendientes" la bandeja ya está fijada a un único estado
+    (ver scopePendientesDeJefe/scopePendientesDeRrhh), así que elegir otro
+    estado ahí nunca podía traer resultados. Para el trabajador (sin tabs)
+    siempre se muestran. --}}
+    @php
+        $mostrarFiltroEstado = $estados->isNotEmpty()
+            && (! (auth()->user()->esJefe() || auth()->user()->esRrhh()) || $vista === 'todas');
+    @endphp
+    @if($mostrarFiltroEstado)
         <div class="flex flex-wrap gap-1.5 mb-3">
             <a href="{{ route('papeletas.index', array_merge($filtros, ['vista' => $vista, 'estado_id' => null])) }}"
                class="text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 {{ empty($filtros['estado_id']) ? 'bg-gray-700 text-white shadow-glass' : 'glass text-gray-600 hover:bg-white/70' }}">
@@ -139,14 +151,16 @@
                 <input type="text" name="buscar" value="{{ $filtros['buscar'] ?? '' }}" placeholder="Buscar código, destino..."
                        class="input-glass !py-2 text-sm">
             </div>
-            <div>
-                <select name="estado_id" class="input-glass !py-2 text-sm">
-                    <option value="">Todos los estados</option>
-                    @foreach($estados as $estado)
-                        <option value="{{ $estado->id }}" @selected(($filtros['estado_id'] ?? null) == $estado->id)>{{ $estado->nombre }}</option>
-                    @endforeach
-                </select>
-            </div>
+            @if($mostrarFiltroEstado)
+                <div>
+                    <select name="estado_id" class="input-glass !py-2 text-sm">
+                        <option value="">Todos los estados</option>
+                        @foreach($estados as $estado)
+                            <option value="{{ $estado->id }}" @selected(($filtros['estado_id'] ?? null) == $estado->id)>{{ $estado->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             @if($areas->isNotEmpty())
                 <div>
                     <select name="area_id" class="input-glass !py-2 text-sm">

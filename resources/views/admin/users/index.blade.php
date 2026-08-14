@@ -58,6 +58,7 @@
                     <th class="p-3">Nombre</th>
                     <th class="p-3 hidden sm:table-cell">Email</th>
                     <th class="p-3">Rol</th>
+                    <th class="p-3 hidden md:table-cell">Cargo</th>
                     <th class="p-3 hidden sm:table-cell">Jefe</th>
                     <th class="p-3">Estado</th>
                     <th class="p-3"></th>
@@ -73,6 +74,7 @@
                                 {{ $user->getRoleNames()->first() ?? '—' }}
                             </span>
                         </td>
+                        <td class="p-3 hidden md:table-cell text-gray-500">{{ $user->cargo?->nombre ?? '—' }}</td>
                         <td class="p-3 hidden sm:table-cell text-gray-500">{{ $user->jefe?->name ?? '—' }}</td>
                         <td class="p-3">
                             <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $user->estado ? 'bg-emerald-50/80 text-emerald-700 border border-emerald-200/60' : 'bg-gray-100/80 text-gray-500 border border-gray-200/60' }}">

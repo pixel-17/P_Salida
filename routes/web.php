@@ -6,6 +6,7 @@ use App\Http\Controllers\AprobacionController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CargoController;
+use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\MotivoController;
 use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\PapeletaController;
@@ -111,4 +112,19 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('motivos', MotivoController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show']);
     });
+
+    // ---------- Mi equipo: JEFE (crear + ver los suyos) y ADMINISTRADOR
+    // (CRUD completo de cualquier trabajador). La autorización fina
+    // (quién puede editar/eliminar) vive en UserPolicy, no acá — este
+    // middleware solo filtra "ni siquiera intentes entrar" para el resto
+    // de roles (RRHH, Vigilante, Trabajador). ----------
+    Route::middleware(['role:JEFE|ADMINISTRADOR', 'throttle:60,1'])
+        ->prefix('equipo')->name('equipo.')->group(function () {
+            Route::get('/', [EquipoController::class, 'index'])->name('index');
+            Route::get('/crear', [EquipoController::class, 'create'])->name('create');
+            Route::post('/', [EquipoController::class, 'store'])->name('store');
+            Route::get('/{trabajador}/editar', [EquipoController::class, 'edit'])->name('edit');
+            Route::put('/{trabajador}', [EquipoController::class, 'update'])->name('update');
+            Route::delete('/{trabajador}', [EquipoController::class, 'destroy'])->name('destroy');
+        });
 });

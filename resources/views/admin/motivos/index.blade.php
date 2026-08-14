@@ -32,7 +32,7 @@
                         <td class="p-3 font-medium text-gray-800">{{ $motivo->nombre }}</td>
                         <td class="p-3 hidden sm:table-cell">
                             @if($motivo->requiere_documento)
-                                <span class="text-xs text-amber-600">📎 Sí</span>
+                                <span class="inline-flex items-center gap-1 text-xs text-amber-600"><x-icon name="paperclip" class="w-3.5 h-3.5" /> Sí</span>
                             @else
                                 <span class="text-xs text-gray-400">No</span>
                             @endif

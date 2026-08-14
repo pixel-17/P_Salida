@@ -79,7 +79,6 @@ trait Auditable
             'auditable_id' => $model->getKey(),
             'auditable_label' => static::etiquetaLegible($model),
             'cambios' => $cambios ?: null,
-            'ip' => request()?->ip(),
             'created_at' => now(),
         ]);
     }

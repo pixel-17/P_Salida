@@ -98,16 +98,20 @@
             <td>{{ $papeleta->jefe?->name ?? '—' }}</td>
         </tr>
         <tr>
+            <td class="label">Cargo</td>
+            <td>{{ $papeleta->trabajador->cargo?->nombre ?? '—' }}</td>
             <td class="label">Área</td>
             <td>{{ $papeleta->area?->nombre ?? '—' }}</td>
-            <td class="label">Sede</td>
-            <td>{{ $papeleta->sede?->nombre ?? '—' }}</td>
         </tr>
         <tr>
+            <td class="label">Sede</td>
+            <td>{{ $papeleta->sede?->nombre ?? '—' }}</td>
             <td class="label">Motivo</td>
             <td>{{ $papeleta->motivo->nombre }}</td>
+        </tr>
+        <tr>
             <td class="label">Destino</td>
-            <td>{{ $papeleta->destino }}</td>
+            <td colspan="3">{{ $papeleta->destino }}</td>
         </tr>
         <tr>
             <td class="label">Fecha de salida</td>

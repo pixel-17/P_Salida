@@ -175,7 +175,7 @@ class PapeletaController extends Controller
         $this->authorize('ver', $papeleta);
 
         $papeleta->load([
-            'trabajador', 'jefe', 'area', 'sede', 'motivo', 'estado',
+            'trabajador.cargo', 'jefe', 'area', 'sede', 'motivo', 'estado',
             'marcaciones.registradoPor', 'historial.usuario',
         ]);
 
