@@ -11,6 +11,7 @@ use App\Http\Controllers\MotivoController;
 use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\PapeletaController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\SedeController;
 use App\Http\Controllers\LiveCheckController;
 use App\Http\Controllers\UserController;
@@ -96,6 +97,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/papeletas/{papeleta}/salida', [VigilanteController::class, 'confirmarSalida'])->name('salida');
         Route::post('/papeletas/{papeleta}/retorno', [VigilanteController::class, 'confirmarRetorno'])->name('retorno');
     });
+
+    // ---------- Reportes: RRHH ve todo, JEFE solo su equipo (el alcance
+    // se resuelve dentro de ReporteController, no acá). ----------
+    Route::middleware(['role:RRHH|JEFE|ADMINISTRADOR', 'throttle:60,1'])
+        ->get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
 
     // ---------- Panel y catálogos: solo ADMINISTRADOR ----------
     // Throttle de seguridad general sobre el panel administrativo completo

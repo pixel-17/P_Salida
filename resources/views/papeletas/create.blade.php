@@ -51,6 +51,13 @@
             <textarea name="motivo_detalle" rows="3" class="input-glass">{{ old('motivo_detalle') }}</textarea>
         </div>
 
+        @php
+            // Minutos en pasos de 5 para que el selector sea corto y usable
+            // en móvil. Si en el futuro se necesita minuto exacto, basta con
+            // cambiar este rango a range(0, 59).
+            $minutosDisponibles = range(0, 55, 5);
+        @endphp
+
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
                 <x-input-label value="Fecha" />
@@ -58,46 +65,123 @@
                        min="{{ now()->toDateString() }}" value="{{ old('fecha_salida') }}"
                        class="input-glass">
             </div>
+
             <div>
                 <x-input-label value="Hora salida" />
-                <input type="time" name="hora_salida_programada" id="hora_salida_programada" required
-                       value="{{ old('hora_salida_programada') }}"
-                       class="input-glass">
+                @include('papeletas.partials.time-picker', [
+                    'name' => 'hora_salida_programada',
+                    'id' => 'hora_salida_programada',
+                    'required' => true,
+                    'minutos' => $minutosDisponibles,
+                ])
                 <p id="hora-hint" class="text-[11px] text-gray-400 mt-1.5"></p>
             </div>
+
             <div>
                 <x-input-label value="Hora retorno" />
-                <input type="time" name="hora_retorno_programada" value="{{ old('hora_retorno_programada') }}"
-                       class="input-glass">
+                @include('papeletas.partials.time-picker', [
+                    'name' => 'hora_retorno_programada',
+                    'id' => 'hora_retorno_programada',
+                    'required' => false,
+                    'minutos' => $minutosDisponibles,
+                ])
             </div>
         </div>
 
         <script>
-            // Solo UX: si eligen hoy, no dejamos elegir una hora ya pasada
-            // en el picker. La validación real (que no se puede saltar
-            // editando el HTML) va en StorePapeletaRequest::withValidator.
+            // Convierte los tres selects (hora 1-12 / minuto / AM-PM) de un
+            // picker en el valor 24h "H:i" que espera el backend, y viceversa
+            // para repoblar el picker si la request anterior fue rechazada
+            // (old()). Todo el manejo de horario vive en selects propios, ya
+            // no en un <input type="time"> nativo — así el formato AM/PM es
+            // siempre explícito sin importar el idioma/config del navegador.
+            function initTimePicker(id) {
+                const root = document.getElementById('picker-' + id);
+                if (!root) return null;
+
+                const hiddenInput = document.getElementById(id);
+                const hourSel = root.querySelector('[data-role="hour"]');
+                const minSel = root.querySelector('[data-role="minute"]');
+                const ampmSel = root.querySelector('[data-role="ampm"]');
+
+                function actualizar() {
+                    if (!hourSel.value || !minSel.value) {
+                        hiddenInput.value = '';
+                        return;
+                    }
+                    let h = parseInt(hourSel.value, 10) % 12;
+                    if (ampmSel.value === 'PM') h += 12;
+                    hiddenInput.value = String(h).padStart(2, '0') + ':' + minSel.value;
+                }
+
+                function repoblarDesdeValorInicial() {
+                    const valor = hiddenInput.value;
+                    if (!valor) return;
+
+                    const [hh, mm] = valor.split(':').map(Number);
+                    const ampm = hh >= 12 ? 'PM' : 'AM';
+                    let h12 = hh % 12;
+                    if (h12 === 0) h12 = 12;
+
+                    // Si el minuto guardado no cae justo en un paso de 5
+                    // (dato viejo, por ejemplo), lo redondeamos al más
+                    // cercano para poder mostrarlo en el selector.
+                    const minRedondeado = Math.round(mm / 5) * 5 % 60;
+
+                    hourSel.value = String(h12);
+                    minSel.value = String(minRedondeado).padStart(2, '0');
+                    ampmSel.value = ampm;
+                }
+
+                [hourSel, minSel, ampmSel].forEach(sel => sel.addEventListener('change', actualizar));
+
+                repoblarDesdeValorInicial();
+                actualizar();
+
+                return actualizar;
+            }
+
             (function () {
+                initTimePicker('hora_salida_programada');
+                initTimePicker('hora_retorno_programada');
+
                 const fechaInput = document.getElementById('fecha_salida');
-                const horaInput = document.getElementById('hora_salida_programada');
                 const hint = document.getElementById('hora-hint');
 
-                function actualizarMinHora() {
-                    const hoy = new Date().toISOString().slice(0, 10);
+                // Ya no hay ningún atributo `min` nativo que bloquee elegir
+                // una hora: el picker por selects permite cualquier
+                // combinación siempre. Esto es solo un aviso informativo;
+                // la validación real (correcta, en horario de Perú) va en
+                // StorePapeletaRequest::withValidator.
+                //
+                // OJO: NO usar `new Date().toISOString()` para calcular "hoy"
+                // acá. Eso da la fecha en UTC, y con Perú en UTC-5, desde
+                // ~19:00 hora local el reloj UTC ya marca el día siguiente —
+                // eso fue justamente el bug anterior. Se arman los
+                // componentes de fecha con el Date LOCAL del navegador.
+                function fechaLocalISO(date) {
+                    const yyyy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                }
+
+                function actualizarHint() {
+                    const ahora = new Date();
+                    const hoy = fechaLocalISO(ahora);
 
                     if (fechaInput.value === hoy) {
-                        const ahora = new Date();
-                        const hh = String(ahora.getHours()).padStart(2, '0');
-                        const mm = String(ahora.getMinutes()).padStart(2, '0');
-                        horaInput.min = `${hh}:${mm}`;
-                        hint.textContent = 'Como la fecha es hoy, la hora no puede ser menor a la actual.';
+                        const horaTexto = ahora.toLocaleTimeString('es-PE', {
+                            hour: 'numeric', minute: '2-digit', hour12: true,
+                        });
+                        hint.textContent = `Como la fecha es hoy, elige una hora igual o posterior a las ${horaTexto}.`;
                     } else {
-                        horaInput.removeAttribute('min');
                         hint.textContent = '';
                     }
                 }
 
-                fechaInput.addEventListener('change', actualizarMinHora);
-                actualizarMinHora();
+                fechaInput.addEventListener('change', actualizarHint);
+                actualizarHint();
             })();
         </script>
 

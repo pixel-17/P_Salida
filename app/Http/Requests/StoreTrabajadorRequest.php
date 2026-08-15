@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Enums\RolUsuario;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class StoreTrabajadorRequest extends FormRequest
 {
@@ -21,7 +20,9 @@ class StoreTrabajadorRequest extends FormRequest
             'email' => ['required', 'email', Rule::unique('users', 'email')],
             'dni' => ['required', 'digits:8', Rule::unique('users', 'dni')],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'password' => ['required', Password::defaults()],
+            // La contraseña ya no se pide acá: se autogenera = DNI en
+            // EquipoController::store(). Ver EquipoController::update()
+            // para el reseteo manual (ahí sí valida contra Password::defaults()).
             'cargo_id' => ['nullable', 'exists:cargos,id'],
             // sede_id ya no se pide en el formulario: se deriva siempre
             // del jefe (ver EquipoController::store) para que nunca quede

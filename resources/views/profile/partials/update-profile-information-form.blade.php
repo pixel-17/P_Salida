@@ -5,7 +5,7 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-500">
-            Actualiza tu nombre y tu correo electrónico.
+            Actualiza tu correo electrónico. El nombre lo gestiona tu administrador.
         </p>
     </header>
 
@@ -19,8 +19,8 @@
 
         <div>
             <x-input-label for="name" value="Nombre" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+            <x-text-input id="name" type="text" class="mt-1 block w-full opacity-60 cursor-not-allowed" value="{{ $user->name }}" disabled />
+            <p class="text-xs text-gray-400 mt-1">El nombre no se puede editar desde tu perfil.</p>
         </div>
 
         <div>

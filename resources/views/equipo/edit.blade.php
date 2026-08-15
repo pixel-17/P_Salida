@@ -25,7 +25,7 @@
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Nueva contraseña</label>
             <input type="password" name="password" class="input-glass">
-            <p class="text-xs text-gray-400 mt-1">Déjalo en blanco para mantener la actual.</p>
+            <p class="text-xs text-gray-400 mt-1">Déjalo en blanco para mantener la actual. Si la cambias, se le pedirá volver a definirla al iniciar sesión.</p>
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Cargo</label>

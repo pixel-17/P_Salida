@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
+
+        // Corre en toda petición web; internamente solo actúa si hay
+        // usuario autenticado con must_change_password = true.
+        $middleware->appendToGroup('web', \App\Http\Middleware\ForzarCambioPassword::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

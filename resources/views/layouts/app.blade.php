@@ -63,6 +63,7 @@
                         'label' => 'General',
                         'items' => [
                             ['label' => 'Dashboard', 'route' => route('admin.dashboard'), 'active' => 'admin.dashboard', 'icon' => 'chart'],
+                            ['label' => 'Reportes', 'route' => route('reportes.index'), 'active' => 'reportes.*', 'icon' => 'chart'],
                             ['label' => 'Papeletas', 'route' => route('papeletas.index'), 'active' => 'papeletas.*', 'icon' => 'document'],
                         ],
                     ],
@@ -93,6 +94,7 @@
                     [
                         'label' => 'Herramientas',
                         'items' => [
+                            ['label' => 'Reportes', 'route' => route('reportes.index'), 'active' => 'reportes.*', 'icon' => 'chart'],
                             ['label' => 'Exportar a CSV', 'route' => route('papeletas.exportar'), 'active' => 'papeletas.exportar', 'icon' => 'download'],
                         ],
                     ],
@@ -108,6 +110,7 @@
                             ['label' => 'Por aprobar', 'route' => route('papeletas.index', ['vista' => 'pendientes']), 'active' => $vistaActual === 'pendientes', 'icon' => 'inbox', 'badge' => $pendientesJefe],
                             ['label' => 'Todas', 'route' => route('papeletas.index', ['vista' => 'todas']), 'active' => $vistaActual === 'todas' || request()->routeIs('papeletas.show'), 'icon' => 'list'],
                             ['label' => 'Mis trabajadores', 'route' => route('equipo.index'), 'active' => 'equipo.*', 'icon' => 'user-circle'],
+                            ['label' => 'Reportes', 'route' => route('reportes.index'), 'active' => 'reportes.*', 'icon' => 'chart'],
                         ],
                     ],
                 ];
@@ -138,6 +141,11 @@
                                 @endforeach
                             </ul>
                         </div>
+                    @endif
+
+                    @if ($usuario->must_change_password && ! $usuario->aviso_password_mostrado)
+                        @php($usuario->marcarAvisoPasswordMostrado())
+                        @include('layouts.partials.alerta-cambio-password')
                     @endif
 
                     {{ $slot }}
@@ -186,6 +194,11 @@
                         @endforeach
                     </ul>
                 </div>
+            @endif
+
+            @if ($usuario && $usuario->must_change_password && ! $usuario->aviso_password_mostrado)
+                @php($usuario->marcarAvisoPasswordMostrado())
+                @include('layouts.partials.alerta-cambio-password')
             @endif
 
             {{ $slot }}

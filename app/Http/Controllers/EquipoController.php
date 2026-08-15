@@ -66,7 +66,12 @@ class EquipoController extends Controller
     public function store(StoreTrabajadorRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $data['password'] = Hash::make($data['password']);
+
+        // Contraseña inicial = DNI del propio trabajador. Nunca se pide en
+        // el formulario: el jefe/admin no elige contraseñas ajenas. Se
+        // fuerza el cambio en el primer login (must_change_password).
+        $data['password'] = Hash::make($data['dni']);
+        $data['must_change_password'] = true;
 
         // El jefe_id NUNCA sale del input cuando quien crea es un jefe: se
         // fuerza al propio usuario autenticado para que la relación quede
@@ -114,9 +119,15 @@ class EquipoController extends Controller
             'estado' => ['sometimes', 'boolean'],
         ]);
 
-        $data['password'] = filled($data['password'] ?? null)
-            ? Hash::make($data['password'])
-            : $trabajador->password;
+        if (filled($data['password'] ?? null)) {
+            $data['password'] = Hash::make($data['password']);
+            // Si el jefe/admin resetea la contraseña manualmente, el
+            // trabajador vuelve a quedar obligado a cambiarla en su
+            // siguiente login (misma regla que en la creación).
+            $data['must_change_password'] = true;
+        } else {
+            unset($data['password']);
+        }
 
         // Misma regla dura que en store(): la sede sigue siempre a la del
         // jefe. Si el admin cambia el jefe_id, la sede se recalcula sola.

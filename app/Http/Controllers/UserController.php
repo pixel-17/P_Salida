@@ -51,7 +51,12 @@ class UserController extends Controller
         $data = $request->validated();
         $rol = $data['rol'];
         unset($data['rol']);
-        $data['password'] = Hash::make($data['password']);
+
+        // Contraseña inicial = DNI, igual que en EquipoController: el
+        // admin no elige contraseñas ajenas para ningún rol. Se fuerza el
+        // cambio en el primer login (must_change_password).
+        $data['password'] = Hash::make($data['dni']);
+        $data['must_change_password'] = true;
 
         $user = User::create($data);
         $user->assignRole($rol);
@@ -70,9 +75,12 @@ class UserController extends Controller
         $rol = $data['rol'];
         unset($data['rol']);
 
-        $data['password'] = filled($data['password'] ?? null)
-            ? Hash::make($data['password'])
-            : $user->password;
+        if (filled($data['password'] ?? null)) {
+            $data['password'] = Hash::make($data['password']);
+            $data['must_change_password'] = true;
+        } else {
+            unset($data['password']);
+        }
 
         $user->update($data);
         $user->syncRoles($rol);

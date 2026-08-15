@@ -22,9 +22,8 @@
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Teléfono</label>
             <input type="text" name="telefono" value="{{ old('telefono') }}" class="input-glass">
         </div>
-        <div>
-            <label class="block font-semibold text-sm text-gray-600 mb-1.5">Contraseña</label>
-            <input type="password" name="password" required class="input-glass">
+        <div class="rounded-lg bg-brand-50 border border-brand-100 px-3 py-2.5 text-xs text-brand-700">
+            La contraseña inicial será su número de DNI. Se le pedirá cambiarla al iniciar sesión por primera vez.
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Cargo</label>

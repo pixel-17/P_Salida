@@ -30,7 +30,10 @@ class StoreUserRequest extends FormRequest
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($userId)],
             'dni' => ['required', 'digits:8', Rule::unique('users', 'dni')->ignore($userId)],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'password' => [$userId ? 'nullable' : 'required', Password::defaults()],
+            // En creación no se pide: se autogenera = DNI (ver
+            // UserController::store()). En edición queda opcional para
+            // que el admin pueda resetearla manualmente si hace falta.
+            'password' => ['nullable', Password::defaults()],
             'cargo_id' => ['nullable', 'exists:cargos,id'],
             'sede_id' => ['nullable', 'exists:sedes,id'],
             'jefe_id' => $reglasJefeId,

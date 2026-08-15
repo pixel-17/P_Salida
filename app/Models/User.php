@@ -19,6 +19,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password', 'dni', 'telefono',
         'cargo_id', 'sede_id', 'jefe_id', 'estado',
+        'must_change_password', 'aviso_password_mostrado',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -27,6 +28,8 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'estado' => 'boolean',
+        'must_change_password' => 'boolean',
+        'aviso_password_mostrado' => 'boolean',
     ];
 
     public function cargo(): BelongsTo
@@ -97,5 +100,18 @@ class User extends Authenticatable
     public function esAdmin(): bool
     {
         return $this->hasRole(RolUsuario::ADMINISTRADOR);
+    }
+
+    /**
+     * Marca que ya se le mostró el aviso de "tu contraseña sigue siendo tu
+     * DNI" — una sola vez en toda la vida del usuario, acepte o cancele.
+     * No toca must_change_password (ese sigue reflejando si la contraseña
+     * real cambió o no).
+     */
+    public function marcarAvisoPasswordMostrado(): void
+    {
+        if (! $this->aviso_password_mostrado) {
+            $this->forceFill(['aviso_password_mostrado' => true])->save();
+        }
     }
 }
