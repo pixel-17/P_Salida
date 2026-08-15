@@ -144,7 +144,9 @@
                     @endif
 
                     @if ($usuario->must_change_password && ! $usuario->aviso_password_mostrado)
-                        @php($usuario->marcarAvisoPasswordMostrado())
+                        @php
+                            $usuario->marcarAvisoPasswordMostrado();
+                        @endphp
                         @include('layouts.partials.alerta-cambio-password')
                     @endif
 
