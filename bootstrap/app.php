@@ -20,9 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
 
-        // Corre en toda petición web; internamente solo actúa si hay
-        // usuario autenticado con must_change_password = true.
-        $middleware->appendToGroup('web', \App\Http\Middleware\ForzarCambioPassword::class);
+        // Ya no se obliga a cambiar la contraseña: solo se sugiere con una
+        // alerta flotante (ver layouts/partials/alerta-cambio-password).
+        // El middleware ForzarCambioPassword se deja sin registrar para no
+        // redirigir a la fuerza; la pantalla de cambio sigue disponible en
+        // password.forzado.edit para quien acepte la sugerencia.
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

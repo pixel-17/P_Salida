@@ -8,16 +8,22 @@ use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 /**
- * Reportes de salidas: ranking de trabajadores, motivos más usados y horas
- * reales acumuladas por motivo. RRHH ve todo (global); Jefe ve exactamente
- * lo mismo pero acotado a su propio equipo (scopeDeSuEquipo) — misma
- * pantalla, mismo cálculo, distinto alcance según rol.
+ * Reportes de salidas: ranking de trabajadores, áreas, motivos, horas
+ * fuera y detalle tabulado de cada salida. RRHH ve todo (global); Jefe ve
+ * exactamente lo mismo pero acotado a su propio equipo (scopeDeSuEquipo)
+ * — misma pantalla, mismo cálculo, distinto alcance según rol.
  */
 class ReporteController extends Controller
 {
     private const TOP_TRABAJADORES = 10;
 
+    private const TOP_AREAS = 10;
+
     private const TOP_MOTIVOS = 10;
+
+    private const TOP_HORAS_FUERA = 10;
+
+    private const POR_PAGINA_DETALLE = 20;
 
     public function index(Request $request): View
     {
@@ -32,26 +38,57 @@ class ReporteController extends Controller
         // solo su equipo. RRHH y Admin ven todo. Un usuario podría en teoría
         // tener varios roles a la vez; RRHH/Admin siempre gana el alcance
         // global si está presente.
-        if ($usuario->esJefe() && ! $usuario->esRrhh() && ! $usuario->esAdmin()) {
+        $esSoloJefe = $usuario->esJefe() && ! $usuario->esRrhh() && ! $usuario->esAdmin();
+        if ($esSoloJefe) {
             $base->deSuEquipo($usuario->id);
         }
 
         $papeletas = (clone $base)
-            ->with(['trabajador:id,name', 'motivo:id,nombre', 'marcaciones:id,papeleta_id,tipo,created_at'])
+            ->with([
+                'trabajador:id,name',
+                'jefe:id,name',
+                'area:id,nombre',
+                'motivo:id,nombre',
+                'marcaciones:id,papeleta_id,tipo,created_at',
+            ])
             ->get();
+
+        // ---------- Tabla de detalle: consulta paginada aparte (no sobre
+        // la Collection ya cargada en memoria), respeta los mismos filtros
+        // de rango/área/estado/búsqueda vía Papeleta::scopeConFiltros. ----------
+        $filtrosDetalle = $request->only(['buscar', 'estado_id', 'area_id']);
+        $detalleQuery = Papeleta::query()->whereBetween('fecha_salida', [$desde->toDateString(), $hasta->toDateString()]);
+        if ($esSoloJefe) {
+            $detalleQuery->deSuEquipo($usuario->id);
+        }
+        $detalleSalidas = $detalleQuery
+            ->conFiltros($filtrosDetalle)
+            ->with(['trabajador:id,name', 'jefe:id,name', 'area:id,nombre', 'estado:id,codigo,nombre,color', 'marcaciones:id,papeleta_id,tipo,created_at'])
+            ->latest('fecha_salida')
+            ->paginate(self::POR_PAGINA_DETALLE)
+            ->withQueryString();
 
         return view('reportes.index', [
             'desde' => $desde->toDateString(),
             'hasta' => $hasta->toDateString(),
+            'filtrosDetalle' => $filtrosDetalle,
+            'estados' => \App\Models\Estado::orderBy('orden')->get(),
+            'areas' => \App\Models\Area::orderBy('nombre')->get(),
             'totalSalidas' => $papeletas->count(),
             'rankingTrabajadores' => $this->rankingTrabajadores($papeletas),
+            'rankingAreas' => $this->rankingAreas($papeletas),
+            'rankingHorasFuera' => $this->rankingHorasFuera($papeletas),
             'motivosMasUsados' => $this->motivosMasUsados($papeletas),
             'horasPorMotivo' => $this->horasPorMotivo($papeletas),
+            'detalleSalidas' => $detalleSalidas,
         ]);
     }
 
     /**
-     * Trabajadores con mayor cantidad de salidas en el rango, de mayor a menor.
+     * Trabajadores con mayor cantidad de salidas en el rango, de mayor a
+     * menor. Incluye área y jefe directo (tomados de la papeleta más
+     * reciente del grupo) para responder "quién solicitó más y quién es
+     * su jefe" sin una consulta aparte.
      */
     private function rankingTrabajadores(Collection $papeletas): Collection
     {
@@ -59,10 +96,61 @@ class ReporteController extends Controller
             ->groupBy('trabajador_id')
             ->map(fn (Collection $grupo) => [
                 'nombre' => $grupo->first()->trabajador?->name ?? 'Sin nombre',
+                'area' => $grupo->first()->area?->nombre ?? '—',
+                'jefe' => $grupo->first()->jefe?->name ?? '—',
                 'total' => $grupo->count(),
             ])
             ->sortByDesc('total')
             ->take(self::TOP_TRABAJADORES)
+            ->values();
+    }
+
+    /**
+     * Áreas con más salidas solicitadas en el rango, de mayor a menor.
+     */
+    private function rankingAreas(Collection $papeletas): Collection
+    {
+        return $papeletas
+            ->groupBy('area_id')
+            ->map(fn (Collection $grupo) => [
+                'nombre' => $grupo->first()->area?->nombre ?? 'Sin área',
+                'total' => $grupo->count(),
+            ])
+            ->sortByDesc('total')
+            ->take(self::TOP_AREAS)
+            ->values();
+    }
+
+    /**
+     * Trabajadores con más horas fuera acumuladas en el rango: para cada
+     * papeleta con marcación de SALIDA, se cuenta el tiempo transcurrido
+     * hasta la marcación de RETORNO (si ya volvió) o hasta ahora (si sigue
+     * afuera — EN_CURSO/VENCIDA). Esto refleja el tiempo real fuera de la
+     * empresa, no solo lo "cerrado" (a diferencia de horasPorMotivo, que
+     * solo cuenta salidas ya finalizadas).
+     */
+    private function rankingHorasFuera(Collection $papeletas): Collection
+    {
+        return $papeletas
+            ->filter(fn (Papeleta $p) => $p->marcaciones->firstWhere('tipo', 'SALIDA') !== null)
+            ->groupBy('trabajador_id')
+            ->map(function (Collection $grupo) {
+                $segundos = $grupo->sum(function (Papeleta $papeleta) {
+                    $salida = $papeleta->marcaciones->firstWhere('tipo', 'SALIDA');
+                    $retorno = $papeleta->marcaciones->firstWhere('tipo', 'RETORNO');
+
+                    return $salida->created_at->diffInSeconds($retorno?->created_at ?? now());
+                });
+
+                return [
+                    'nombre' => $grupo->first()->trabajador?->name ?? 'Sin nombre',
+                    'area' => $grupo->first()->area?->nombre ?? '—',
+                    'jefe' => $grupo->first()->jefe?->name ?? '—',
+                    'horas' => round($segundos / 3600, 1),
+                ];
+            })
+            ->sortByDesc('horas')
+            ->take(self::TOP_HORAS_FUERA)
             ->values();
     }
 
