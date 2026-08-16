@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CancelarPapeletaAction;
 use App\Actions\CrearPapeletaAction;
 use App\Enums\EstadoPapeleta;
 use App\Enums\RolUsuario;
@@ -118,24 +119,34 @@ class PapeletaController extends Controller
             ]);
         }
 
+        // "Hora salida"/"Hora retorno" programadas + las REALES (lo que
+        // picó el vigilante en garita), que es lo que de verdad cuenta las
+        // horas fuera — ver Papeleta::marcacion().
         $encabezados = [
             'Código', 'Trabajador', 'Jefe', 'Área', 'Sede', 'Motivo',
-            'Destino', 'Fecha salida', 'Hora salida', 'Hora retorno', 'Estado',
+            'Destino', 'Fecha salida', 'Hora salida (programada)', 'Hora retorno (programada)',
+            'Hora salida (real, garita)', 'Hora retorno (real, garita)', 'Horas fuera', 'Estado', 'Detalle estado',
         ];
 
         $spreadsheet = new Spreadsheet;
         $hoja = $spreadsheet->getActiveSheet();
         $hoja->setTitle('Papeletas');
         $hoja->fromArray($encabezados, null, 'A1');
-        $hoja->getStyle('A1:K1')->getFont()->setBold(true);
+        $hoja->getStyle('A1:O1')->getFont()->setBold(true);
 
         $papeletas = $query
-            ->with(['trabajador', 'jefe', 'area', 'sede', 'motivo', 'estado'])
+            ->with(['trabajador', 'jefe', 'area', 'sede', 'motivo', 'estado', 'marcaciones'])
             ->latest('fecha_salida')
             ->get();
 
         $fila = 2;
         foreach ($papeletas as $papeleta) {
+            $marcSalida = $papeleta->marcacion(\App\Enums\TipoMarcacion::SALIDA);
+            $marcRetorno = $papeleta->marcacion(\App\Enums\TipoMarcacion::RETORNO);
+            $horasFuera = $marcSalida
+                ? round($marcSalida->created_at->diffInMinutes($marcRetorno?->created_at ?? now()) / 60, 1)
+                : null;
+
             $hoja->fromArray([
                 $papeleta->codigo,
                 $papeleta->trabajador->name,
@@ -147,12 +158,16 @@ class PapeletaController extends Controller
                 $papeleta->fecha_salida->format('d/m/Y'),
                 $papeleta->hora_salida_programada,
                 $papeleta->hora_retorno_programada,
+                $marcSalida?->created_at->format('d/m/Y H:i'),
+                $marcRetorno?->created_at->format('d/m/Y H:i'),
+                $horasFuera,
                 $papeleta->estado->nombre,
+                $papeleta->etiquetaVencimiento(),
             ], null, "A{$fila}");
             $fila++;
         }
 
-        foreach (range('A', 'K') as $columna) {
+        foreach (range('A', 'O') as $columna) {
             $hoja->getColumnDimension($columna)->setAutoSize(true);
         }
 
@@ -297,27 +312,22 @@ class PapeletaController extends Controller
         ]);
     }
 
-    public function anular(Request $request, Papeleta $papeleta): RedirectResponse
+    /**
+     * Cancelación manual por el propio trabajador (con motivo obligatorio).
+     * El front pide doble confirmación antes de enviar este POST — ver
+     * papeletas/show.blade.php.
+     */
+    public function cancelar(Request $request, Papeleta $papeleta, CancelarPapeletaAction $accion): RedirectResponse
     {
-        $this->authorize('anular', $papeleta);
-
-        $estadoAnterior = $papeleta->estado->codigo;
-
-        $papeleta->update([
-            'estado_id' => Estado::porCodigo(EstadoPapeleta::RECHAZADO)->id,
+        $datos = $request->validate([
+            'motivo' => ['required', 'string', 'min:5', 'max:500'],
+        ], [
+            'motivo.required' => 'Cuéntanos brevemente por qué cancelas la papeleta.',
+            'motivo.min' => 'El motivo es muy corto, dinos un poco más.',
         ]);
 
-        $papeleta->delete();
+        $accion->execute($papeleta, $request->user(), $datos['motivo']);
 
-        HistorialPapeleta::registrar(
-            $papeleta,
-            $request->user(),
-            'ANULADA',
-            $estadoAnterior,
-            EstadoPapeleta::RECHAZADO->value,
-            'Anulada por el propio trabajador'
-        );
-
-        return redirect()->route('papeletas.index')->with('status', 'Papeleta anulada.');
+        return redirect()->route('papeletas.show', $papeleta)->with('status', 'Papeleta cancelada.');
     }
 }

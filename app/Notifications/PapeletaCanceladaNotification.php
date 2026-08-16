@@ -2,8 +2,20 @@
 
 namespace App\Notifications;
 
+/**
+ * CANCELADA ahora es exclusivamente la cancelación manual que hace el
+ * propio trabajador desde su usuario (ver PapeletaController::cancelar).
+ * El motivo que escribió el trabajador es obligatorio y va en el mensaje.
+ */
 class PapeletaCanceladaNotification extends BasePapeletaNotification
 {
+    public function __construct(
+        \App\Models\Papeleta $papeleta,
+        public string $motivo,
+    ) {
+        parent::__construct($papeleta);
+    }
+
     public function tipo(): string
     {
         return 'PAPELETA_CANCELADA';
@@ -16,6 +28,6 @@ class PapeletaCanceladaNotification extends BasePapeletaNotification
 
     public function mensaje(): string
     {
-        return 'Se canceló automáticamente: terminó el día y nunca se registró la marcación de salida.';
+        return "El trabajador la canceló. Motivo: {$this->motivo}";
     }
 }

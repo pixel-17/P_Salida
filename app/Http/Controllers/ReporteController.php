@@ -63,7 +63,10 @@ class ReporteController extends Controller
         }
         $detalleSalidas = $detalleQuery
             ->conFiltros($filtrosDetalle)
-            ->with(['trabajador:id,name', 'jefe:id,name', 'area:id,nombre', 'estado:id,codigo,nombre,color', 'marcaciones:id,papeleta_id,tipo,created_at'])
+            ->with([
+                'trabajador:id,name', 'jefe:id,name', 'area:id,nombre', 'motivo:id,nombre',
+                'estado:id,codigo,nombre,color', 'marcaciones:id,papeleta_id,tipo,created_at',
+            ])
             ->latest('fecha_salida')
             ->paginate(self::POR_PAGINA_DETALLE)
             ->withQueryString();

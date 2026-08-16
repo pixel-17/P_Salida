@@ -59,8 +59,12 @@ class MarcarPapeletasVencidasCommand extends Command
 
     /**
      * El plazo real es hora_retorno_programada si se definió; si no,
-     * cae en motivo.max_horas contado desde la marcación de salida.
-     * Si ninguno de los dos existe, la papeleta no vence automáticamente.
+     * cae en motivo.max_horas contado desde la marcación de salida. Si
+     * ninguno de los dos existe, el límite por defecto es la medianoche
+     * del día de la salida: si marcó salida con el vigilante y hasta esa
+     * hora no marcó retorno, se considera "Sin retorno" (ver
+     * Papeleta::etiquetaVencimiento) — así ninguna papeleta EN_CURSO queda
+     * fuera del barrido automático solo por no tener un límite explícito.
      */
     private function calcularLimite(Papeleta $papeleta): ?Carbon
     {
@@ -70,10 +74,14 @@ class MarcarPapeletasVencidasCommand extends Command
 
         $marcacionSalida = $papeleta->marcaciones->firstWhere('tipo', TipoMarcacion::SALIDA->value);
 
-        if ($marcacionSalida && $papeleta->motivo->max_horas) {
+        if (! $marcacionSalida) {
+            return null;
+        }
+
+        if ($papeleta->motivo->max_horas) {
             return $marcacionSalida->created_at->addHours($papeleta->motivo->max_horas);
         }
 
-        return null;
+        return Carbon::parse($papeleta->fecha_salida->format('Y-m-d').' 23:59:59');
     }
 }

@@ -14,18 +14,19 @@
     </x-slot>
 
     @php
-        // Mientras la papeleta sigue "viva" (puede cambiar de estado sin que
-        // el usuario haga nada: la mueve el jefe, RRHH o el vigilante), esta
-        // pantalla hace polling corto y se autorecarga al detectar cambios.
-        // En estados terminales no tiene sentido seguir preguntando.
-        $estadosFinales = [
-            \App\Enums\EstadoPapeleta::FINALIZADO->value,
-            \App\Enums\EstadoPapeleta::RECHAZADO->value,
-            \App\Enums\EstadoPapeleta::VENCIDA->value,
-        ];
-        $sigueViva = ! in_array($papeleta->estado->codigo, $estadosFinales, true);
-    @endphp
+    $estadosFinales = [
+        \App\Enums\EstadoPapeleta::FINALIZADO->value,
+        \App\Enums\EstadoPapeleta::RECHAZADO->value,
+        \App\Enums\EstadoPapeleta::VENCIDA->value,
+        \App\Enums\EstadoPapeleta::CANCELADO->value,
+    ];
 
+    $sigueViva = !in_array(
+        $papeleta->estado->codigo,
+        $estadosFinales,
+        true
+    );
+@endphp
     @if($sigueViva)
         <div
             x-data="estadoEnVivo(@js($papeleta->id))"
@@ -128,10 +129,26 @@
     <div id="detalle-papeleta">
 
     <div class="glass-card p-5 mb-4 animate-fade-in-up">
-        <div class="flex justify-between items-start mb-3">
+        <div class="flex justify-between items-start mb-3 gap-3 flex-wrap">
             <h1 class="text-lg font-bold text-gray-800">{{ $papeleta->codigo }}</h1>
-            <x-status-badge :estado="$papeleta->estado" />
+            <x-status-badge :estado="$papeleta->estado" size="lg" :detalle="$papeleta->etiquetaVencimiento()" />
         </div>
+
+        @if($papeleta->etiquetaVencimiento() === 'Sin retorno')
+            <div class="mb-3 text-sm rounded-xl px-4 py-2.5 bg-red-50/80 text-red-700 border border-red-200/60">
+                Marcó salida con el vigilante y nunca registró su retorno.
+            </div>
+        @elseif($papeleta->etiquetaVencimiento() === 'No se presentó')
+            <div class="mb-3 text-sm rounded-xl px-4 py-2.5 bg-amber-50/80 text-amber-700 border border-amber-200/60">
+                Se venció el día sin que el trabajador llegara a marcar salida.
+            </div>
+        @elseif($papeleta->estaEn(\App\Enums\EstadoPapeleta::CANCELADO))
+            @php($motivoCancelacion = $papeleta->historial()->where('accion', 'CANCELADA_POR_TRABAJADOR')->latest()->first()?->descripcion)
+            <div class="mb-3 text-sm rounded-xl px-4 py-2.5 bg-gray-100/80 text-gray-600 border border-gray-200/60">
+                El trabajador canceló esta papeleta.
+                @if($motivoCancelacion) Motivo: {{ $motivoCancelacion }} @endif
+            </div>
+        @endif
 
         <dl class="text-sm space-y-1.5 text-gray-700">
             <div class="flex justify-between"><dt class="text-gray-500">Trabajador</dt><dd class="font-medium">{{ $papeleta->trabajador->name }}</dd></div>
@@ -150,6 +167,62 @@
             @endif
         </dl>
     </div>
+
+    {{-- ---------- Cancelación manual: solo el propio trabajador, con
+    motivo obligatorio y doble confirmación (Alpine) antes de enviar. ---------- --}}
+    @can('cancelar', $papeleta)
+        <div class="glass-card p-5 mb-4 animate-fade-in-up" x-data="{ abierto: false, confirmando: false, motivo: '' }">
+            <button type="button" @click="abierto = true"
+                    class="btn-glass !text-red-600 !bg-red-50/80 hover:!bg-red-100/80 border border-red-200/60 text-sm w-full sm:w-auto">
+                Cancelar esta papeleta
+            </button>
+
+            <div x-show="abierto" x-cloak x-transition
+                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div @click.outside="abierto = false" class="glass-panel !bg-white p-5 max-w-sm w-full">
+                    <template x-if="!confirmando">
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-2">¿Por qué cancelas esta papeleta?</h3>
+                            <textarea x-model="motivo" rows="3" maxlength="500"
+                                      class="input-glass !py-2 text-sm w-full"
+                                      placeholder="Cuéntanos brevemente el motivo (mínimo 5 caracteres)"></textarea>
+                            <div class="flex justify-end gap-2 mt-3">
+                                <button type="button" @click="abierto = false" class="btn-secondary text-sm">Volver</button>
+                                <button type="button"
+                                        :disabled="motivo.trim().length < 5"
+                                        :class="motivo.trim().length < 5 ? 'opacity-50 cursor-not-allowed' : ''"
+                                        @click="confirmando = true"
+                                        class="btn-glass !text-red-600 !bg-red-50/80 border border-red-200/60 text-sm">
+                                    Continuar
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="confirmando">
+                        <div>
+                            <h3 class="font-semibold text-red-700 mb-2">¿Seguro que quieres cancelarla?</h3>
+                            <p class="text-sm text-gray-600 mb-4">Esta acción no se puede deshacer. La papeleta quedará como CANCELADA.</p>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" @click="confirmando = false" class="btn-secondary text-sm">No, volver</button>
+                                <form method="POST" action="{{ route('papeletas.cancelar', $papeleta) }}">
+                                    @csrf
+                                    <input type="hidden" name="motivo" :value="motivo">
+                                    <button type="submit" class="btn-glass !text-white text-sm" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
+                                        Sí, cancelar definitivamente
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            @error('motivo')
+                <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
+            @enderror
+        </div>
+    @endcan
 
     {{-- Se muestra apenas debajo del estado, antes que cualquier otra cosa:
     para el trabajador en APROBADO_RRHH/EN_CURSO, este código es la única

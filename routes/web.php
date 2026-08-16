@@ -56,6 +56,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/papeletas/{papeleta}/pdf', [PapeletaController::class, 'pdfBoleta'])->name('papeletas.pdf');
     Route::get('/papeletas/{papeleta}/eventos', [PapeletaController::class, 'eventos'])->name('papeletas.eventos');
 
+    // ---------- Cancelación manual: solo el propio trabajador, con motivo
+    // y doble confirmación en el front (ver papeletas/show.blade.php). ----------
+    Route::post('/papeletas/{papeleta}/cancelar', [PapeletaController::class, 'cancelar'])
+        ->middleware('throttle:10,1')
+        ->name('papeletas.cancelar');
+
     // ---------- Flujo de aprobación: Jefe (SOLICITADO) y RRHH (APROBADO_JEFE) ----------
     // Throttle amplio (no son acciones que un jefe/RRHH haga en ráfaga
     // normalmente), pero evita que un doble-clic o un bot machaque el

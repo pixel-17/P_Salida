@@ -18,9 +18,12 @@ enum EstadoPapeleta: string
     case VENCIDA = 'VENCIDA';
 
     /**
-     * Cierre automático de fin de día: papeleta aprobada por RRHH que nunca
-     * llegó a marcar salida (el trabajador nunca se presentó). Ver
-     * App\Console\Commands\CancelarPapeletasNoPresentadasCommand.
+     * Cancelación EXCLUSIVAMENTE manual: el propio trabajador cancela su
+     * papeleta desde su usuario, antes de salir (ver
+     * App\Policies\PapeletaPolicy::cancelar y App\Actions\CancelarPapeletaAction).
+     * Ya no se usa para nada automático — lo que antes caía acá (papeleta
+     * que se quedó en trámite y nunca se presentó) ahora cae en VENCIDA,
+     * ver App\Console\Commands\CancelarPapeletasNoPresentadasCommand.
      */
     case CANCELADO = 'CANCELADO';
 }

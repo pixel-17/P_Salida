@@ -135,6 +135,32 @@ class Papeleta extends Model
         return max(0, self::COOLDOWN_CODIGO_SEGUNDOS - $transcurridos);
     }
 
+    /**
+     * "Sin retorno": caso puntual dentro de VENCIDA en que el trabajador sí
+     * marcó salida con el vigilante pero nunca marcó retorno. El resto de
+     * VENCIDA (nunca llegó a marcar salida, papeleta que se quedó en
+     * trámite) se etiqueta como "No se presentó". Es un cálculo derivado
+     * de las marcaciones reales, no un estado aparte en la base de datos.
+     */
+    public function esSinRetorno(): bool
+    {
+        return $this->estaEn(EstadoPapeleta::VENCIDA) && $this->yaMarcoSalida() && ! $this->yaMarcoRetorno();
+    }
+
+    /**
+     * Motivo legible para mostrar junto al estado cuando este es VENCIDA:
+     * distingue "Sin retorno" (salió y no volvió) de "No se presentó"
+     * (nunca llegó a marcar salida). Null para cualquier otro estado.
+     */
+    public function etiquetaVencimiento(): ?string
+    {
+        if (! $this->estaEn(EstadoPapeleta::VENCIDA)) {
+            return null;
+        }
+
+        return $this->esSinRetorno() ? 'Sin retorno' : 'No se presentó';
+    }
+
     // ---------- Scopes para bandejas por rol ----------
 
     public function scopePendientesDeJefe($query, int $jefeId)
