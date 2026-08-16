@@ -22,10 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Ya no se obliga a cambiar la contraseña: solo se sugiere con una
-        // alerta flotante (ver layouts/partials/alerta-cambio-password).
-        // El middleware ForzarCambioPassword se deja sin registrar para no
-        // redirigir a la fuerza; la pantalla de cambio sigue disponible en
-        // password.forzado.edit para quien acepte la sugerencia.
+        // alerta flotante (ver layouts/partials/alerta-cambio-password), sin
+        // redirigir a la fuerza. El middleware que hacía esa redirección
+        // (ForzarCambioPassword) se eliminó por no usarse; la pantalla de
+        // cambio sigue disponible en password.forzado.edit para quien
+        // acepte la sugerencia (ver ForzarCambioPasswordController).
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
