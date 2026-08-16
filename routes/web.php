@@ -96,7 +96,7 @@ Route::middleware(['auth'])->group(function () {
     // decenas de papeletas seguidas, no queremos bloquear el flujo real de
     // la puerta; el límite solo frena un abuso claro (script, QR reader
     // en loop roto), no el uso humano normal.
-    Route::middleware(['role:VIGILANTE', 'throttle:120,1'])->prefix('vigilancia')->name('vigilancia.')->group(function () {
+    Route::middleware(['role:VIGILANTE', 'throttle:120,1', 'bloquear.domingo.vigilancia'])->prefix('vigilancia')->name('vigilancia.')->group(function () {
         Route::get('/', [VigilanteController::class, 'index'])->name('index');
         Route::get('/buscar', [VigilanteController::class, 'buscar'])->name('buscar');
         Route::get('/resumen', [VigilanteController::class, 'resumen'])->name('resumen');

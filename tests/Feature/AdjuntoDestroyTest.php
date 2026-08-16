@@ -125,4 +125,41 @@ class AdjuntoDestroyTest extends TestCase
         $response->assertForbidden();
         $this->assertModelExists($adjunto);
     }
+
+    /**
+     * Caso de evidencia: un adjunto subido como respuesta a una observación
+     * JUSTIFICACION no se puede eliminar aunque la papeleta esté en un
+     * estado (SOLICITADO) donde otros adjuntos sí serían borrables. Esto
+     * cubre el gap donde antes solo se validaba el estado, sin importar si
+     * el archivo era evidencia de una observación ya respondida.
+     */
+    public function test_el_trabajador_no_puede_eliminar_un_adjunto_que_es_evidencia_de_una_observacion(): void
+    {
+        ['papeleta' => $papeleta, 'trabajador' => $trabajador, 'jefe' => $jefe]
+            = $this->crearPapeletaConAdjunto('SOLICITADO');
+
+        $observacion = \App\Models\Observacion::create([
+            'papeleta_id' => $papeleta->id,
+            'usuario_id' => $jefe->id,
+            'tipo' => 'JUSTIFICACION',
+            'comentario' => 'Falta sustento del destino.',
+            'atendida' => true,
+        ]);
+
+        $adjuntoEvidencia = Adjunto::create([
+            'papeleta_id' => $papeleta->id,
+            'observacion_id' => $observacion->id,
+            'nombre_original' => 'sustento_respuesta.pdf',
+            'archivo' => "papeletas/{$papeleta->id}/sustento_respuesta.pdf",
+            'extension' => 'pdf',
+            'peso' => 1024,
+        ]);
+
+        // La papeleta sigue en SOLICITADO (mismo estado del setUp), donde
+        // un adjunto normal SÍ sería borrable — ver el test de arriba.
+        $response = $this->actingAs($trabajador)->delete(route('adjuntos.destroy', $adjuntoEvidencia));
+
+        $response->assertForbidden();
+        $this->assertModelExists($adjuntoEvidencia);
+    }
 }

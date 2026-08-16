@@ -27,4 +27,17 @@ return [
     |
     */
     'dias_no_laborables' => [0],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Horario límite de la garita
+    |--------------------------------------------------------------------------
+    |
+    | Usado por MarcarSalidaVigilanteAction y MarcarRetornoVigilanteAction:
+    | pasada esta hora el vigilante ya no puede confirmar salidas ni
+    | retornos (sí puede seguir consultando "Hoy" y buscando). Ajusta aquí,
+    | no en las Actions.
+    |
+    */
+    'hora_limite_registro_garita' => '17:30',
 ];

@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\EstadoPapeleta;
 use App\Enums\RolUsuario;
 use App\Enums\TipoObservacion;
+use App\Models\Adjunto;
 use App\Models\Papeleta;
 use App\Models\User;
 
@@ -108,10 +109,20 @@ class PapeletaPolicy
      * mientras la papeleta sigue en revisión (SOLICITADO/OBSERVADO). Una vez
      * aprobada por RRHH o en curso/finalizada, el adjunto queda como
      * evidencia y ya no se puede tocar. El administrador es la única
-     * excepción.
+     * excepción a la restricción de estado.
+     *
+     * EXCEPCIÓN ADICIONAL, sin importar el estado ni el rol (ni siquiera el
+     * administrador): un adjunto subido como respuesta a una observación
+     * (tiene observacion_id, ver Adjunto::observacion) es evidencia del
+     * expediente y jamás se puede eliminar, aunque la papeleta vuelva a
+     * SOLICITADO/OBSERVADO más adelante por otro motivo.
      */
-    public function eliminarAdjunto(User $user, Papeleta $papeleta): bool
+    public function eliminarAdjunto(User $user, Papeleta $papeleta, Adjunto $adjunto): bool
     {
+        if ($adjunto->observacion_id !== null) {
+            return false;
+        }
+
         if ($user->hasRole(RolUsuario::ADMINISTRADOR)) {
             return true;
         }

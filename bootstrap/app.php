@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'bloquear.domingo.vigilancia' => \App\Http\Middleware\BloquearVigilanciaDomingo::class,
         ]);
 
         // Ya no se obliga a cambiar la contraseña: solo se sugiere con una

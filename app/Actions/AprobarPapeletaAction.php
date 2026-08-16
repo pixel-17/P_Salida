@@ -49,14 +49,15 @@ class AprobarPapeletaAction
         $papeleta->refresh();
 
         if ($esJefeDecidiendo) {
-            $papeleta->trabajador->notify(new PapeletaAprobadaJefeNotification($papeleta));
+            // Jefe aprueba: notifica solo a RRHH (el trabajador todavía no
+            // debe ser notificado, falta la aprobación de RRHH).
             // El proyecto usa Spatie Permission (roles vía tabla pivote),
             // no una columna "rol" en users — ->where('rol', ...) no existe
             // y tronaba. Se usa el scope role() que trae Spatie.
             Notification::send(User::role(RolUsuario::RRHH->value)->get(), new PapeletaAprobadaJefeNotification($papeleta));
         } else {
+            // RRHH aprueba: notifica solo al trabajador.
             $papeleta->trabajador->notify(new PapeletaAprobadaRrhhNotification($papeleta));
-            $papeleta->jefe?->notify(new PapeletaAprobadaRrhhNotification($papeleta));
         }
 
         return $papeleta;

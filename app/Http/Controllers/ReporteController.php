@@ -28,6 +28,8 @@ class ReporteController extends Controller
 
     private const POR_PAGINA_DETALLE = 20;
 
+    private const TOP_CUADRO_TRABAJADORES = 50;
+
     public function index(Request $request): View
     {
         ['papeletas' => $papeletas, 'desde' => $desde, 'hasta' => $hasta, 'esSoloJefe' => $esSoloJefe]
@@ -58,11 +60,14 @@ class ReporteController extends Controller
             'estados' => \App\Models\Estado::orderBy('orden')->get(),
             'areas' => \App\Models\Area::orderBy('nombre')->get(),
             'totalSalidas' => $papeletas->count(),
+            'esSoloJefe' => $esSoloJefe,
             'rankingTrabajadores' => $this->rankingTrabajadores($papeletas),
             'rankingAreas' => $this->rankingAreas($papeletas),
             'rankingHorasFuera' => $this->rankingHorasFuera($papeletas),
             'motivosMasUsados' => $this->motivosMasUsados($papeletas),
             'horasPorMotivo' => $this->horasPorMotivo($papeletas),
+            'cuadroTrabajadores' => $this->cuadroTrabajadores($papeletas),
+            'motivoGeneralTop' => $this->motivosMasUsados($papeletas)->first(),
             'detalleSalidas' => $detalleSalidas,
         ]);
     }
@@ -106,6 +111,18 @@ class ReporteController extends Controller
             ['Trabajador', 'Área', 'Jefe', 'Horas fuera (garita: salida → retorno)'],
             $this->rankingHorasFuera($papeletas),
             fn (array $fila) => [$fila['nombre'], $fila['area'], $fila['jefe'], $fila['horas']],
+        );
+
+        $this->hojaRanking(
+            $spreadsheet,
+            'Motivo por trabajador',
+            ['Trabajador', 'Área', 'Jefe', 'Total salidas', 'Motivo más recurrente', 'Veces', '% del total', 'Horas fuera', 'Última salida'],
+            $this->cuadroTrabajadores($papeletas),
+            fn (array $fila) => [
+                $fila['nombre'], $fila['area'], $fila['jefe'], $fila['total'],
+                $fila['motivo_top'], $fila['motivo_top_total'], $fila['motivo_top_pct'].'%',
+                $fila['horas_fuera'], $fila['ultima_salida'],
+            ],
         );
 
         $spreadsheet->setActiveSheetIndex(0);
@@ -211,6 +228,58 @@ class ReporteController extends Controller
             ])
             ->sortByDesc('total')
             ->take(self::TOP_TRABAJADORES)
+            ->values();
+    }
+
+    /**
+     * Cuadro dinámico principal de la pantalla: por cada trabajador junta
+     * en una sola fila lo que antes vivía repartido en varios rankings —
+     * total de salidas, motivo más recurrente (con cuántas veces lo usó y
+     * qué % de sus salidas representa) y horas fuera acumuladas — para que
+     * la tabla se pueda buscar/ordenar en el cliente sin volver a pedir
+     * datos al servidor. RRHH lo ve global (todos los trabajadores); Jefe
+     * ya llega acotado a su equipo porque $papeletas viene filtrado por
+     * scopeDeSuEquipo desde papeletasDelRango().
+     */
+    private function cuadroTrabajadores(Collection $papeletas): Collection
+    {
+        return $papeletas
+            ->groupBy('trabajador_id')
+            ->map(function (Collection $grupo) {
+                $motivoTop = $grupo
+                    ->groupBy(fn (Papeleta $p) => $p->motivo?->nombre ?? 'Sin motivo')
+                    ->map->count()
+                    ->sortDesc();
+
+                $segundosFuera = $grupo->sum(function (Papeleta $papeleta) {
+                    $salida = $papeleta->marcaciones->firstWhere('tipo', 'SALIDA');
+
+                    if (! $salida) {
+                        return 0;
+                    }
+
+                    $retorno = $papeleta->marcaciones->firstWhere('tipo', 'RETORNO');
+
+                    return $salida->created_at->diffInSeconds($retorno?->created_at ?? now());
+                });
+
+                $total = $grupo->count();
+                $motivoTopTotal = $motivoTop->first() ?? 0;
+
+                return [
+                    'nombre' => $grupo->first()->trabajador?->name ?? 'Sin nombre',
+                    'area' => $grupo->first()->area?->nombre ?? '—',
+                    'jefe' => $grupo->first()->jefe?->name ?? '—',
+                    'total' => $total,
+                    'motivo_top' => $motivoTop->keys()->first() ?? '—',
+                    'motivo_top_total' => $motivoTopTotal,
+                    'motivo_top_pct' => $total > 0 ? (int) round($motivoTopTotal / $total * 100) : 0,
+                    'horas_fuera' => round($segundosFuera / 3600, 1),
+                    'ultima_salida' => $grupo->max('fecha_salida')?->format('d/m/Y'),
+                ];
+            })
+            ->sortByDesc('total')
+            ->take(self::TOP_CUADRO_TRABAJADORES)
             ->values();
     }
 

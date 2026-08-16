@@ -27,9 +27,14 @@ class VigilanteController extends Controller
 {
     public function index(): View
     {
-        abort_unless(request()->user()->esVigilante(), 403);
+        $user = request()->user();
 
-        return view('vigilancia.index');
+        abort_unless($user->esVigilante(), 403);
+
+        return view('vigilancia.index', [
+            'sedeNombre' => $user->sede?->nombre,
+            'horaLimiteRegistro' => config('papeletas.hora_limite_registro_garita'),
+        ]);
     }
 
     public function buscar(Request $request): JsonResponse

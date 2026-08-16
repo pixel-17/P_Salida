@@ -24,6 +24,14 @@ class MarcarSalidaVigilanteAction
     {
         Gate::forUser($vigilante)->authorize('marcarComoVigilante', $papeleta);
 
+        $horaLimite = config('papeletas.hora_limite_registro_garita');
+
+        if ($horaLimite && now()->greaterThan(today()->setTimeFromTimeString($horaLimite))) {
+            throw ValidationException::withMessages([
+                'marcacion' => "Ya pasó el horario límite para registrar salidas ({$horaLimite}).",
+            ]);
+        }
+
         if ($papeleta->yaMarcoSalida()) {
             throw ValidationException::withMessages([
                 'marcacion' => 'Esta papeleta ya tiene una marcación de salida registrada.',

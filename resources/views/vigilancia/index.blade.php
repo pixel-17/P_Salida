@@ -1,12 +1,46 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center gap-2">
-            <x-application-logo class="w-7 h-7 fill-current text-brand-600" />
-            <h2 class="font-bold text-2xl text-gray-800 tracking-tight">Control de puerta</h2>
+        <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <x-application-logo class="w-7 h-7 fill-current text-brand-600" />
+                <div>
+                    <h2 class="font-bold text-2xl text-gray-800 tracking-tight leading-tight">Control de puerta</h2>
+                    @if ($sedeNombre)
+                        <p class="text-xs text-gray-400 leading-tight">{{ $sedeNombre }}</p>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Reloj en vivo: ayuda al vigilante a ubicarse respecto al
+            horario límite de registro sin tener que mirar el celular. --}}
+            <div class="text-right shrink-0">
+                <p class="text-lg font-bold text-gray-700 tabular-nums leading-tight" x-data x-text="new Date().toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit'})" x-init="setInterval(() => $el.textContent = new Date().toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit'}), 15000)"></p>
+                <p class="text-xs text-gray-400 leading-tight">Límite {{ $horaLimiteRegistro }}</p>
+            </div>
         </div>
     </x-slot>
 
-    <div x-data="controlPuerta()" x-init="init()" class="max-w-xl mx-auto">
+    <div x-data="controlPuerta(@js($horaLimiteRegistro))" x-init="init()" class="max-w-xl mx-auto">
+
+        {{-- Aviso de cierre de registros: aparece 30 min antes del límite y
+        cambia de tono cuando ya se pasó la hora. No bloquea "Hoy"/"Buscar",
+        solo advierte que confirmar salida/retorno ya no va a funcionar. --}}
+        <div
+            x-show="avisoHorario"
+            x-cloak
+            class="glass-card p-3.5 mb-4 flex items-start gap-2.5 border-l-4 animate-fade-in-up"
+            :style="`border-left-color: ${horarioVencido ? '#f43f5e' : '#f59e0b'}`"
+        >
+            <span class="text-lg shrink-0" x-text="horarioVencido ? '🚫' : '⏰'"></span>
+            <p class="text-xs leading-relaxed" :class="horarioVencido ? 'text-rose-600' : 'text-amber-600'">
+                <span x-show="!horarioVencido">
+                    Quedan <span class="font-semibold" x-text="minutosParaLimite"></span> min para el cierre de registros (<span x-text="horaLimite"></span>). Después solo se puede consultar.
+                </span>
+                <span x-show="horarioVencido" x-cloak>
+                    Ya pasó el horario límite de registros (<span x-text="horaLimite"></span>). Puede seguir consultando, pero no confirmar salidas ni retornos.
+                </span>
+            </p>
+        </div>
 
         {{-- Mismo patrón de pestañas glass que "Mis papeletas" / "Bandeja"
         del trabajador y del jefe — misma sensación de app en ambos roles. --}}
@@ -14,10 +48,16 @@
             <button
                 type="button"
                 @click="cambiarModo('resumen')"
-                class="flex-1 text-sm px-4 py-2 rounded-lg font-semibold transition-all duration-200"
+                class="flex-1 relative text-sm px-4 py-2 rounded-lg font-semibold transition-all duration-200"
                 :class="modo === 'resumen' ? 'bg-white shadow-sm text-brand-700' : 'text-gray-500 hover:text-gray-700'"
             >
                 Hoy
+                <span
+                    x-show="pendientesTotal > 0"
+                    x-cloak
+                    x-text="pendientesTotal"
+                    class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-600 text-white text-[10px] font-bold flex items-center justify-center"
+                ></span>
             </button>
             <button
                 type="button"
@@ -82,14 +122,28 @@
 
         {{-- ---------- Modo resumen: pendientes / en curso / finalizados de hoy en la sede ---------- --}}
         <div x-show="modo === 'resumen'" x-cloak class="mb-4">
-            <template x-if="cargandoResumen">
+            <div class="flex items-center justify-between px-1 mb-2">
+                <p class="text-xs text-gray-400" x-show="!cargandoResumen">
+                    Actualizado <span x-text="ultimaActualizacionTexto"></span>
+                </p>
+                <button
+                    type="button"
+                    @click="cargarResumen()"
+                    :disabled="cargandoResumen"
+                    class="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 ml-auto"
+                >
+                    <span :class="cargandoResumen ? 'animate-spin' : ''">↻</span> Actualizar
+                </button>
+            </div>
+
+            <template x-if="cargandoResumen && !huboResumenAntes">
                 <div class="glass-card p-8 text-center animate-fade-in-up">
                     <span class="inline-block w-6 h-6 border-2 border-brand-200 border-t-brand-600 rounded-full animate-spin"></span>
                     <p class="text-sm text-gray-400 mt-2">Cargando…</p>
                 </div>
             </template>
 
-            <template x-if="!cargandoResumen">
+            <template x-if="!cargandoResumen || huboResumenAntes">
                 <div class="space-y-5">
                     {{-- Pendientes de salida --}}
                     <div>
@@ -181,7 +235,7 @@
 
                         <div class="mt-3 flex gap-2">
                             <button
-                                x-show="p.puede_salida"
+                                x-show="p.puede_salida && !horarioVencido"
                                 :disabled="confirmando === p.id"
                                 @click="confirmar(p, 'salida')"
                                 class="flex-1 btn-glass text-white shadow-glass justify-center text-base py-3"
@@ -191,7 +245,7 @@
                                 <span x-show="confirmando === p.id" x-cloak>Confirmando…</span>
                             </button>
                             <button
-                                x-show="p.puede_retorno"
+                                x-show="p.puede_retorno && !horarioVencido"
                                 :disabled="confirmando === p.id"
                                 @click="confirmar(p, 'retorno')"
                                 class="flex-1 btn-glass text-white shadow-glass justify-center text-base py-3"
@@ -200,6 +254,13 @@
                                 <span x-show="confirmando !== p.id">Confirmar retorno</span>
                                 <span x-show="confirmando === p.id" x-cloak>Confirmando…</span>
                             </button>
+                            <p
+                                x-show="(p.puede_salida || p.puede_retorno) && horarioVencido"
+                                x-cloak
+                                class="flex-1 text-center text-xs font-medium text-rose-500 bg-rose-50 rounded-lg py-3"
+                            >
+                                Fuera de horario ({{ $horaLimiteRegistro }})
+                            </p>
                         </div>
                     </div>
                 </template>
@@ -208,7 +269,7 @@
     </div>
 
     <script>
-        function controlPuerta() {
+        function controlPuerta(horaLimite) {
             return {
                 modo: 'resumen',
                 q: '',
@@ -219,15 +280,56 @@
                 errorCamara: '',
                 resumen: { pendientes: [], en_curso: [], finalizadas: [] },
                 cargandoResumen: false,
+                huboResumenAntes: false,
+                ultimaActualizacion: null,
+                horaLimite,
+                minutosParaLimite: null,
+                horarioVencido: false,
+                avisoHorario: false,
+                autoRefrescoId: null,
+
+                get pendientesTotal() {
+                    return this.resumen.pendientes.length + this.resumen.en_curso.length;
+                },
+
+                get ultimaActualizacionTexto() {
+                    if (!this.ultimaActualizacion) return '—';
+                    return this.ultimaActualizacion.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+                },
 
                 init() {
                     // Arranca en "Hoy" (resumen de la sede), no en la cámara:
                     // el vigilante ve primero quién falta/está fuera y recién
                     // activa la cámara cuando de verdad va a escanear.
                     this.cargarResumen();
+                    this.evaluarHorario();
+                    setInterval(() => this.evaluarHorario(), 30000);
+
+                    // Refresco automático de "Hoy" cada 45s: la garita queda
+                    // abierta en pantalla todo el turno, no tiene sentido
+                    // que el vigilante tenga que refrescar a mano siempre.
+                    this.autoRefrescoId = setInterval(() => {
+                        if (this.modo === 'resumen' && !this.cargandoResumen) this.cargarResumen();
+                    }, 45000);
 
                     // Si se navega fuera de la pantalla, apagar la cámara.
                     window.addEventListener('beforeunload', () => window.detenerEscaneoQr());
+                },
+
+                // Compara contra el horario límite configurado en el server
+                // (config('papeletas.hora_limite_registro_garita')), no un
+                // valor fijo en el front — si cambia la config, esto lo sigue.
+                evaluarHorario() {
+                    const [h, m] = this.horaLimite.split(':').map(Number);
+                    const limite = new Date();
+                    limite.setHours(h, m, 0, 0);
+
+                    const ahora = new Date();
+                    const diffMin = Math.round((limite - ahora) / 60000);
+
+                    this.horarioVencido = diffMin <= 0;
+                    this.minutosParaLimite = diffMin;
+                    this.avisoHorario = diffMin <= 30;
                 },
 
                 cambiarModo(nuevoModo) {
@@ -256,6 +358,8 @@
                             headers: { Accept: 'application/json' },
                         });
                         this.resumen = await res.json();
+                        this.ultimaActualizacion = new Date();
+                        this.huboResumenAntes = true;
                     } catch (e) {
                         this.resumen = { pendientes: [], en_curso: [], finalizadas: [] };
                     } finally {
@@ -333,9 +437,16 @@
                             },
                         });
 
-                        if (!res.ok) throw new Error('respuesta-no-ok');
-
                         const data = await res.json().catch(() => ({}));
+
+                        if (!res.ok) {
+                            // 422 (ValidationException) trae el motivo real
+                            // (p. ej. "Ya pasó el horario límite…"); si no
+                            // hay detalle, se cae al mensaje genérico.
+                            const detalle = data.errors ? Object.values(data.errors).flat()[0] : null;
+                            throw new Error(detalle || data.mensaje || 'respuesta-no-ok');
+                        }
+
                         window.toastAccion?.(data.mensaje ?? 'Confirmado.', 'ok');
 
                         // Ya no debería seguir en la lista de resultados de
@@ -344,7 +455,7 @@
 
                         if (this.modo === 'resumen') this.cargarResumen();
                     } catch (e) {
-                        window.toastAccion?.('No se pudo confirmar. Intenta de nuevo.', 'error');
+                        window.toastAccion?.(e.message && e.message !== 'respuesta-no-ok' ? e.message : 'No se pudo confirmar. Intenta de nuevo.', 'error');
                     } finally {
                         this.confirmando = null;
                     }

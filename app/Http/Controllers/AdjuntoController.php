@@ -21,26 +21,31 @@ class AdjuntoController extends Controller
             'archivo' => ['required', 'file', 'max:5120', 'mimes:pdf,jpg,jpeg,png'],
         ]);
 
-        $archivo = $request->file('archivo');
-        $ruta = $archivo->store("papeletas/{$papeleta->id}", 'local');
-
-        Adjunto::create([
-            'papeleta_id' => $papeleta->id,
-            'nombre_original' => $archivo->getClientOriginalName(),
-            'archivo' => $ruta,
-            'extension' => $archivo->getClientOriginalExtension(),
-            'peso' => $archivo->getSize(),
-        ]);
-
-        // Si lo que motivó la subida fue una observación pidiendo sustento,
-        // el archivo ES la respuesta: no se le pide además escribir texto.
-        // Un solo botón, una sola acción.
+        // Se busca ANTES de crear el adjunto: si lo que motivó la subida
+        // fue una observación pidiendo sustento, el archivo ES la
+        // respuesta y queda ligado a ella (ver Adjunto::observacion) para
+        // que la Policy lo trate como evidencia y ya no se pueda borrar,
+        // sin importar el estado al que vuelva la papeleta después.
         $observacionPendiente = $papeleta->observaciones()
             ->where('atendida', false)
             ->where('tipo', TipoObservacion::JUSTIFICACION->value)
             ->latest()
             ->first();
 
+        $archivo = $request->file('archivo');
+        $ruta = $archivo->store("papeletas/{$papeleta->id}", 'local');
+
+        Adjunto::create([
+            'papeleta_id' => $papeleta->id,
+            'observacion_id' => $observacionPendiente?->id,
+            'nombre_original' => $archivo->getClientOriginalName(),
+            'archivo' => $ruta,
+            'extension' => $archivo->getClientOriginalExtension(),
+            'peso' => $archivo->getSize(),
+        ]);
+
+        // El archivo ES la respuesta: no se le pide además escribir texto.
+        // Un solo botón, una sola acción.
         if ($observacionPendiente) {
             $responder->execute($papeleta, $request->user(), "Documento adjuntado: {$archivo->getClientOriginalName()}");
 
@@ -62,7 +67,7 @@ class AdjuntoController extends Controller
 
     public function destroy(Adjunto $adjunto): RedirectResponse
     {
-        $this->authorize('eliminarAdjunto', $adjunto->papeleta);
+        $this->authorize('eliminarAdjunto', [$adjunto->papeleta, $adjunto]);
 
         $adjunto->delete();
 
