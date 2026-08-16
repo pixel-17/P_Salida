@@ -41,6 +41,17 @@
             Filtrar
         </button>
 
+        <a href="{{ route('reportes.exportar', ['desde' => $desde, 'hasta' => $hasta]) }}"
+           class="btn-secondary text-sm inline-flex items-center gap-1.5">
+
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+
+            Exportar Excel
+
+        </a>
+
         <span class="text-xs text-gray-400 ml-auto self-center">
             {{ \Illuminate\Support\Carbon::parse($desde)->format('d/m/Y') }}
             —
@@ -251,6 +262,47 @@
                         height="{{ max(120, $rankingTrabajadores->count() * 32) }}">
                 </canvas>
 
+
+                <div class="overflow-x-auto mt-4">
+
+                    <table class="w-full text-sm">
+
+                        <thead>
+
+                            <tr class="text-left text-xs text-gray-500 border-b border-white/60">
+
+                                <th class="py-2 pr-3 font-semibold">#</th>
+                                <th class="py-2 pr-3 font-semibold">Trabajador</th>
+                                <th class="py-2 pr-3 font-semibold">Área</th>
+                                <th class="py-2 pr-3 font-semibold">Jefe</th>
+                                <th class="py-2 pr-0 font-semibold text-right">Salidas</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @foreach($rankingTrabajadores as $fila)
+
+                                <tr class="border-b border-white/40 last:border-0">
+
+                                    <td class="py-2 pr-3 text-gray-400">{{ $loop->iteration }}</td>
+                                    <td class="py-2 pr-3 text-gray-700 font-semibold">{{ $fila['nombre'] }}</td>
+                                    <td class="py-2 pr-3 text-gray-600">{{ $fila['area'] }}</td>
+                                    <td class="py-2 pr-3 text-gray-600">{{ $fila['jefe'] }}</td>
+                                    <td class="py-2 pr-0 text-right font-bold text-gray-800">{{ $fila['total'] }}</td>
+
+                                </tr>
+
+                            @endforeach
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
             @else
 
                 <p class="text-sm text-gray-400">
@@ -274,6 +326,43 @@
                 <canvas id="chartAreas"
                         height="{{ max(120, $rankingAreas->count() * 32) }}">
                 </canvas>
+
+
+                <div class="overflow-x-auto mt-4">
+
+                    <table class="w-full text-sm">
+
+                        <thead>
+
+                            <tr class="text-left text-xs text-gray-500 border-b border-white/60">
+
+                                <th class="py-2 pr-3 font-semibold">#</th>
+                                <th class="py-2 pr-3 font-semibold">Área</th>
+                                <th class="py-2 pr-0 font-semibold text-right">Salidas</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @foreach($rankingAreas as $fila)
+
+                                <tr class="border-b border-white/40 last:border-0">
+
+                                    <td class="py-2 pr-3 text-gray-400">{{ $loop->iteration }}</td>
+                                    <td class="py-2 pr-3 text-gray-700 font-semibold">{{ $fila['nombre'] }}</td>
+                                    <td class="py-2 pr-0 text-right font-bold text-gray-800">{{ $fila['total'] }}</td>
+
+                                </tr>
+
+                            @endforeach
+
+                        </tbody>
+
+                    </table>
+
+                </div>
 
             @else
 
@@ -326,31 +415,54 @@
             </h3>
 
             <p class="text-xs text-gray-400 mb-4">
-                Desde la marcación de salida hasta el retorno.
+                Desde que el vigilante marca la salida en garita hasta que marca el retorno.
             </p>
 
             @forelse($rankingHorasFuera as $fila)
 
-                <div class="flex items-center gap-3 py-2.5 border-b border-white/50 last:border-0">
+                @if($loop->first)
 
-                    <div class="min-w-0 flex-1">
+                    <div class="overflow-x-auto">
 
-                        <p class="text-sm text-gray-700 truncate">
-                            {{ $fila['nombre'] }}
-                        </p>
+                        <table class="w-full text-sm">
 
-                        <p class="text-xs text-gray-400 truncate">
-                            {{ $fila['area'] }}
-                            · Jefe: {{ $fila['jefe'] }}
-                        </p>
+                            <thead>
+
+                                <tr class="text-left text-xs text-gray-500 border-b border-white/60">
+
+                                    <th class="py-2 pr-3 font-semibold">#</th>
+                                    <th class="py-2 pr-3 font-semibold">Trabajador</th>
+                                    <th class="py-2 pr-3 font-semibold">Área</th>
+                                    <th class="py-2 pr-3 font-semibold">Jefe</th>
+                                    <th class="py-2 pr-0 font-semibold text-right">Horas fuera</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                @endif
+
+                                <tr class="border-b border-white/40 last:border-0">
+
+                                    <td class="py-2 pr-3 text-gray-400">{{ $loop->iteration }}</td>
+                                    <td class="py-2 pr-3 text-gray-700 font-semibold truncate">{{ $fila['nombre'] }}</td>
+                                    <td class="py-2 pr-3 text-gray-600 truncate">{{ $fila['area'] }}</td>
+                                    <td class="py-2 pr-3 text-gray-600 truncate">{{ $fila['jefe'] }}</td>
+                                    <td class="py-2 pr-0 text-right font-bold text-gray-800">{{ number_format($fila['horas'], 1) }}h</td>
+
+                                </tr>
+
+                @if($loop->last)
+
+                            </tbody>
+
+                        </table>
 
                     </div>
 
-                    <span class="text-sm font-bold text-gray-800 shrink-0">
-                        {{ number_format($fila['horas'], 1) }}h
-                    </span>
-
-                </div>
+                @endif
 
             @empty
 
@@ -538,11 +650,19 @@
                         </th>
 
                         <th class="py-2 pr-3 font-semibold">
+                            Sede
+                        </th>
+
+                        <th class="py-2 pr-3 font-semibold">
                             Jefe
                         </th>
 
                         <th class="py-2 pr-3 font-semibold">
                             Motivo
+                        </th>
+
+                        <th class="py-2 pr-3 font-semibold">
+                            Destino
                         </th>
 
                         <th class="py-2 pr-3 font-semibold">
@@ -561,12 +681,8 @@
                             Horas fuera
                         </th>
 
-                        <th class="py-2 pr-3 font-semibold">
+                        <th class="py-2 pr-0 font-semibold">
                             Estado
-                        </th>
-
-                        <th class="py-2 pr-0 font-semibold text-right">
-                            Acción
                         </th>
 
                     </tr>
@@ -623,11 +739,19 @@
                             </td>
 
                             <td class="py-2.5 pr-3 text-gray-600">
+                                {{ $papeleta->sede?->nombre ?? '—' }}
+                            </td>
+
+                            <td class="py-2.5 pr-3 text-gray-600">
                                 {{ $papeleta->jefe?->name ?? '—' }}
                             </td>
 
                             <td class="py-2.5 pr-3 text-gray-600">
                                 {{ $papeleta->motivo?->nombre ?? '—' }}
+                            </td>
+
+                            <td class="py-2.5 pr-3 text-gray-600">
+                                {{ $papeleta->destino ?? '—' }}
                             </td>
 
                             <td class="py-2.5 pr-3 text-gray-600">
@@ -646,22 +770,28 @@
                                 {{ $horasFuera !== null ? number_format($horasFuera, 1).'h' : '—' }}
                             </td>
 
-                            <td class="py-2.5 pr-3">
+                            <td class="py-2.5 pr-0">
 
-                                <x-status-badge
-                                    :estado="$papeleta->estado"
-                                    :detalle="$papeleta->etiquetaVencimiento()" />
+                                <div class="flex items-center gap-2 justify-end">
 
-                            </td>
+                                    <x-status-badge
+                                        :estado="$papeleta->estado"
+                                        :detalle="$papeleta->etiquetaVencimiento()" />
 
-                            <td class="py-2.5 pr-0 text-right">
+                                    <a href="{{ route('papeletas.show', $papeleta) }}"
+                                       title="Ver papeleta"
+                                       class="btn-primary !px-2.5 !py-1.5 text-xs whitespace-nowrap inline-flex items-center gap-1">
 
-                                <a href="{{ route('papeletas.show', $papeleta) }}"
-                                   class="btn-primary !px-3 !py-1.5 text-xs whitespace-nowrap">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
 
-                                    Ver papeleta
+                                        Ver
 
-                                </a>
+                                    </a>
+
+                                </div>
 
                             </td>
 
@@ -672,7 +802,7 @@
 
                         <tr>
 
-                            <td colspan="11"
+                            <td colspan="12"
                                 class="py-6 text-center text-gray-400">
 
                                 No hay salidas que coincidan con estos filtros.
@@ -747,14 +877,37 @@
 
                                 {{ $papeleta->area?->nombre ?? '—' }}
 
+                                @if($papeleta->sede)
+
+                                    · {{ $papeleta->sede->nombre }}
+
+                                @endif
+
                             </p>
 
                         </div>
 
 
-                        <x-status-badge
-                            :estado="$papeleta->estado"
-                            :detalle="$papeleta->etiquetaVencimiento()" />
+                        <div class="flex items-center gap-2 shrink-0">
+
+                            <x-status-badge
+                                :estado="$papeleta->estado"
+                                :detalle="$papeleta->etiquetaVencimiento()" />
+
+                            <a href="{{ route('papeletas.show', $papeleta) }}"
+                               title="Ver papeleta"
+                               class="btn-primary !px-2.5 !py-1.5 text-xs whitespace-nowrap inline-flex items-center gap-1">
+
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+
+                                Ver
+
+                            </a>
+
+                        </div>
 
                     </div>
 
@@ -766,6 +919,12 @@
 
                         · Motivo:
                         {{ $papeleta->motivo?->nombre ?? '—' }}
+
+                        @if($papeleta->destino)
+
+                            · Destino: {{ $papeleta->destino }}
+
+                        @endif
 
                     </p>
 
@@ -787,14 +946,6 @@
                         @endif
 
                     </p>
-
-
-                    <a href="{{ route('papeletas.show', $papeleta) }}"
-                       class="btn-primary !py-1.5 text-xs mt-3 inline-block">
-
-                        Ver papeleta
-
-                    </a>
 
                 </div>
 

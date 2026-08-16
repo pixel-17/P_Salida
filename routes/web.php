@@ -106,8 +106,10 @@ Route::middleware(['auth'])->group(function () {
 
     // ---------- Reportes: RRHH ve todo, JEFE solo su equipo (el alcance
     // se resuelve dentro de ReporteController, no acá). ----------
-    Route::middleware(['role:RRHH|JEFE|ADMINISTRADOR', 'throttle:60,1'])
-        ->get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+    Route::middleware(['role:RRHH|JEFE|ADMINISTRADOR', 'throttle:60,1'])->group(function () {
+        Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+        Route::get('/reportes/exportar', [ReporteController::class, 'exportar'])->name('reportes.exportar');
+    });
 
     // ---------- Panel y catálogos: solo ADMINISTRADOR ----------
     // Throttle de seguridad general sobre el panel administrativo completo

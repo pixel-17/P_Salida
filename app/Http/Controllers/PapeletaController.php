@@ -9,7 +9,6 @@ use App\Enums\RolUsuario;
 use App\Http\Requests\StorePapeletaRequest;
 use App\Models\Area;
 use App\Models\Estado;
-use App\Models\HistorialPapeleta;
 use App\Models\Papeleta;
 use App\Support\PapeletaEstadisticas;
 use Barryvdh\DomPDF\Facade\Pdf;

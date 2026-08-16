@@ -13,7 +13,7 @@ use Illuminate\Support\Carbon;
 /**
  * Alerta temprana (sin cerrar nada): a los 30 min de pasada la hora de
  * salida programada, si el vigilante no marcó salida, avisa a trabajador y
- * jefe. El cierre definitivo (CANCELADO) es un comando aparte, a fin de día
+ * jefe. El cierre definitivo (VENCIDA) es un comando aparte, a fin de día
  * — ver CancelarPapeletasNoPresentadasCommand.
  */
 class AlertarSalidaNoMarcadaCommand extends Command

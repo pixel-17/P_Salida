@@ -108,7 +108,7 @@ class PapeletaPolicy
      * mientras la papeleta sigue en revisión (SOLICITADO/OBSERVADO). Una vez
      * aprobada por RRHH o en curso/finalizada, el adjunto queda como
      * evidencia y ya no se puede tocar. El administrador es la única
-     * excepción (igual que en cancelar()).
+     * excepción.
      */
     public function eliminarAdjunto(User $user, Papeleta $papeleta): bool
     {
@@ -135,18 +135,16 @@ class PapeletaPolicy
     }
 
     /**
-     * Cancelación manual del trabajador: solo su propia papeleta, y solo
-     * mientras todavía no salió (EN_CURSO en adelante ya no se puede
-     * "cancelar" — ahí lo que corresponde es que vuelva y se cierre normal,
-     * o que quede VENCIDA/Sin retorno si no vuelve). El administrador
-     * conserva la excepción que ya tenía.
+     * Cancelación manual del trabajador: únicamente el dueño de la
+     * papeleta puede cancelarla — ni siquiera el administrador tiene
+     * excepción aquí. Y solo mientras todavía no marcó salida con el
+     * vigilante (SOLICITADO/APROBADO_JEFE/APROBADO_RRHH/OBSERVADO): una
+     * vez que pasa a EN_CURSO ya no se puede "cancelar" — ahí lo que
+     * corresponde es que vuelva y se cierre normal, o que quede
+     * VENCIDA/Sin retorno si no vuelve.
      */
     public function cancelar(User $user, Papeleta $papeleta): bool
     {
-        if ($user->hasRole(RolUsuario::ADMINISTRADOR)) {
-            return true;
-        }
-
         return $user->id === $papeleta->trabajador_id
             && in_array($papeleta->estado->codigo, [
                 EstadoPapeleta::SOLICITADO->value,

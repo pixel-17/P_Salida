@@ -6,6 +6,9 @@ use App\Models\Papeleta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Reportes de salidas: ranking de trabajadores, áreas, motivos, horas
@@ -26,6 +29,134 @@ class ReporteController extends Controller
     private const POR_PAGINA_DETALLE = 20;
 
     public function index(Request $request): View
+    {
+        ['papeletas' => $papeletas, 'desde' => $desde, 'hasta' => $hasta, 'esSoloJefe' => $esSoloJefe]
+            = $this->papeletasDelRango($request);
+
+        // ---------- Tabla de detalle: consulta paginada aparte (no sobre
+        // la Collection ya cargada en memoria), respeta los mismos filtros
+        // de rango/área/estado/búsqueda vía Papeleta::scopeConFiltros. ----------
+        $filtrosDetalle = $request->only(['buscar', 'estado_id', 'area_id']);
+        $detalleQuery = Papeleta::query()->whereBetween('fecha_salida', [$desde->toDateString(), $hasta->toDateString()]);
+        if ($esSoloJefe) {
+            $detalleQuery->deSuEquipo($request->user()->id);
+        }
+        $detalleSalidas = $detalleQuery
+            ->conFiltros($filtrosDetalle)
+            ->with([
+                'trabajador:id,name', 'jefe:id,name', 'area:id,nombre', 'sede:id,nombre', 'motivo:id,nombre',
+                'estado:id,codigo,nombre,color', 'marcaciones:id,papeleta_id,tipo,created_at',
+            ])
+            ->latest('fecha_salida')
+            ->paginate(self::POR_PAGINA_DETALLE)
+            ->withQueryString();
+
+        return view('reportes.index', [
+            'desde' => $desde->toDateString(),
+            'hasta' => $hasta->toDateString(),
+            'filtrosDetalle' => $filtrosDetalle,
+            'estados' => \App\Models\Estado::orderBy('orden')->get(),
+            'areas' => \App\Models\Area::orderBy('nombre')->get(),
+            'totalSalidas' => $papeletas->count(),
+            'rankingTrabajadores' => $this->rankingTrabajadores($papeletas),
+            'rankingAreas' => $this->rankingAreas($papeletas),
+            'rankingHorasFuera' => $this->rankingHorasFuera($papeletas),
+            'motivosMasUsados' => $this->motivosMasUsados($papeletas),
+            'horasPorMotivo' => $this->horasPorMotivo($papeletas),
+            'detalleSalidas' => $detalleSalidas,
+        ]);
+    }
+
+    /**
+     * Excel con los 3 rankings de la pantalla de reportes (trabajador que
+     * más solicitó, área más solicitada, trabajador con más horas fuera),
+     * cada uno en su propia hoja. Mismo rango de fechas y mismo alcance por
+     * rol (RRHH ve todo, Jefe solo su equipo) que la pantalla /reportes.
+     *
+     * "Horas fuera" se calcula igual que en la pantalla y en el Excel de
+     * papeletas: desde que el vigilante marca la SALIDA en garita hasta
+     * que marca el RETORNO (o hasta ahora, si todavía no ha vuelto).
+     */
+    public function exportar(Request $request): StreamedResponse
+    {
+        ['papeletas' => $papeletas, 'desde' => $desde, 'hasta' => $hasta] = $this->papeletasDelRango($request);
+
+        $spreadsheet = new Spreadsheet;
+
+        $this->hojaRanking(
+            $spreadsheet,
+            'Trabajadores',
+            ['Trabajador', 'Área', 'Jefe', 'Total salidas'],
+            $this->rankingTrabajadores($papeletas),
+            fn (array $fila) => [$fila['nombre'], $fila['area'], $fila['jefe'], $fila['total']],
+            primeraHoja: true,
+        );
+
+        $this->hojaRanking(
+            $spreadsheet,
+            'Áreas',
+            ['Área', 'Total salidas'],
+            $this->rankingAreas($papeletas),
+            fn (array $fila) => [$fila['nombre'], $fila['total']],
+        );
+
+        $this->hojaRanking(
+            $spreadsheet,
+            'Horas fuera',
+            ['Trabajador', 'Área', 'Jefe', 'Horas fuera (garita: salida → retorno)'],
+            $this->rankingHorasFuera($papeletas),
+            fn (array $fila) => [$fila['nombre'], $fila['area'], $fila['jefe'], $fila['horas']],
+        );
+
+        $spreadsheet->setActiveSheetIndex(0);
+
+        $nombreArchivo = 'reportes_salidas_'.$desde->toDateString().'_a_'.$hasta->toDateString().'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $nombreArchivo, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Escribe una hoja de ranking (encabezados en negrita + filas) dentro
+     * del spreadsheet. $filaCallback convierte cada elemento de $datos en
+     * el arreglo de columnas a escribir, en el mismo orden que $encabezados.
+     */
+    private function hojaRanking(
+        Spreadsheet $spreadsheet,
+        string $titulo,
+        array $encabezados,
+        Collection $datos,
+        \Closure $filaCallback,
+        bool $primeraHoja = false,
+    ): void {
+        $hoja = $primeraHoja ? $spreadsheet->getActiveSheet() : $spreadsheet->createSheet();
+        $hoja->setTitle($titulo);
+
+        $hoja->fromArray($encabezados, null, 'A1');
+        $ultimaColumna = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($encabezados));
+        $hoja->getStyle("A1:{$ultimaColumna}1")->getFont()->setBold(true);
+
+        $fila = 2;
+        foreach ($datos as $item) {
+            $hoja->fromArray($filaCallback($item), null, "A{$fila}");
+            $fila++;
+        }
+
+        foreach (range('A', $ultimaColumna) as $columna) {
+            $hoja->getColumnDimension($columna)->setAutoSize(true);
+        }
+    }
+
+    /**
+     * Carga base compartida por index() y exportar(): resuelve el rango de
+     * fechas, el alcance según rol (RRHH/Admin = global, Jefe = solo su
+     * equipo vía scopeDeSuEquipo) y trae las papeletas del rango con las
+     * relaciones necesarias para calcular los rankings.
+     */
+    private function papeletasDelRango(Request $request): array
     {
         $usuario = $request->user();
 
@@ -53,38 +184,13 @@ class ReporteController extends Controller
             ])
             ->get();
 
-        // ---------- Tabla de detalle: consulta paginada aparte (no sobre
-        // la Collection ya cargada en memoria), respeta los mismos filtros
-        // de rango/área/estado/búsqueda vía Papeleta::scopeConFiltros. ----------
-        $filtrosDetalle = $request->only(['buscar', 'estado_id', 'area_id']);
-        $detalleQuery = Papeleta::query()->whereBetween('fecha_salida', [$desde->toDateString(), $hasta->toDateString()]);
-        if ($esSoloJefe) {
-            $detalleQuery->deSuEquipo($usuario->id);
-        }
-        $detalleSalidas = $detalleQuery
-            ->conFiltros($filtrosDetalle)
-            ->with([
-                'trabajador:id,name', 'jefe:id,name', 'area:id,nombre', 'motivo:id,nombre',
-                'estado:id,codigo,nombre,color', 'marcaciones:id,papeleta_id,tipo,created_at',
-            ])
-            ->latest('fecha_salida')
-            ->paginate(self::POR_PAGINA_DETALLE)
-            ->withQueryString();
-
-        return view('reportes.index', [
-            'desde' => $desde->toDateString(),
-            'hasta' => $hasta->toDateString(),
-            'filtrosDetalle' => $filtrosDetalle,
-            'estados' => \App\Models\Estado::orderBy('orden')->get(),
-            'areas' => \App\Models\Area::orderBy('nombre')->get(),
-            'totalSalidas' => $papeletas->count(),
-            'rankingTrabajadores' => $this->rankingTrabajadores($papeletas),
-            'rankingAreas' => $this->rankingAreas($papeletas),
-            'rankingHorasFuera' => $this->rankingHorasFuera($papeletas),
-            'motivosMasUsados' => $this->motivosMasUsados($papeletas),
-            'horasPorMotivo' => $this->horasPorMotivo($papeletas),
-            'detalleSalidas' => $detalleSalidas,
-        ]);
+        return [
+            'usuario' => $usuario,
+            'desde' => $desde,
+            'hasta' => $hasta,
+            'esSoloJefe' => $esSoloJefe,
+            'papeletas' => $papeletas,
+        ];
     }
 
     /**
