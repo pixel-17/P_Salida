@@ -69,6 +69,12 @@ class AdjuntoController extends Controller
     {
         $this->authorize('eliminarAdjunto', [$adjunto->papeleta, $adjunto]);
 
+        // Antes solo se borraba la fila; el archivo físico en storage/app
+        // quedaba huérfano para siempre (fuga de disco). Se borra el archivo
+        // primero: si esto falla, el registro sigue existiendo y se puede
+        // reintentar, en vez de perder el registro con el archivo aún ahí.
+        Storage::disk('local')->delete($adjunto->archivo);
+
         $adjunto->delete();
 
         return back()->with('status', 'Documento eliminado.');

@@ -15,6 +15,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * fuera y detalle tabulado de cada salida. RRHH ve todo (global); Jefe ve
  * exactamente lo mismo pero acotado a su propio equipo (scopeDeSuEquipo)
  * — misma pantalla, mismo cálculo, distinto alcance según rol.
+ *
+ * Filtro único: rango de fechas + buscar/estado/área (barra superior de la
+ * vista) controlan a la vez los rankings, los gráficos y la tabla de
+ * detalle — y el Excel exportado respeta exactamente lo mismo que se ve
+ * en pantalla en ese momento.
  */
 class ReporteController extends Controller
 {
@@ -32,19 +37,16 @@ class ReporteController extends Controller
 
     public function index(Request $request): View
     {
-        ['papeletas' => $papeletas, 'desde' => $desde, 'hasta' => $hasta, 'esSoloJefe' => $esSoloJefe]
+        ['papeletas' => $papeletas, 'desde' => $desde, 'hasta' => $hasta, 'esSoloJefe' => $esSoloJefe, 'query' => $query]
             = $this->papeletasDelRango($request);
 
         // ---------- Tabla de detalle: consulta paginada aparte (no sobre
-        // la Collection ya cargada en memoria), respeta los mismos filtros
-        // de rango/área/estado/búsqueda vía Papeleta::scopeConFiltros. ----------
+        // la Collection ya cargada en memoria), pero reutiliza la MISMA
+        // query base (rango + alcance + filtros de la barra unificada) que
+        // ya armó papeletasDelRango(), así que un solo formulario de
+        // filtros controla tanto los rankings/gráficos como el detalle. ----------
         $filtrosDetalle = $request->only(['buscar', 'estado_id', 'area_id']);
-        $detalleQuery = Papeleta::query()->whereBetween('fecha_salida', [$desde->toDateString(), $hasta->toDateString()]);
-        if ($esSoloJefe) {
-            $detalleQuery->deSuEquipo($request->user()->id);
-        }
-        $detalleSalidas = $detalleQuery
-            ->conFiltros($filtrosDetalle)
+        $detalleSalidas = (clone $query)
             ->with([
                 'trabajador:id,name', 'jefe:id,name', 'area:id,nombre', 'sede:id,nombre', 'motivo:id,nombre',
                 'estado:id,codigo,nombre,color', 'marcaciones:id,papeleta_id,tipo,created_at',
@@ -170,8 +172,15 @@ class ReporteController extends Controller
     /**
      * Carga base compartida por index() y exportar(): resuelve el rango de
      * fechas, el alcance según rol (RRHH/Admin = global, Jefe = solo su
-     * equipo vía scopeDeSuEquipo) y trae las papeletas del rango con las
-     * relaciones necesarias para calcular los rankings.
+     * equipo vía scopeDeSuEquipo), aplica los filtros de la barra unificada
+     * (buscar/estado/área vía scopeConFiltros) y trae las papeletas
+     * resultantes con las relaciones necesarias para calcular los rankings.
+     *
+     * También devuelve la query base ya armada (sin ->get()) para que
+     * index() pueda paginar el detalle sobre exactamente el mismo filtro,
+     * y para que exportar() genere el Excel respetando lo que el usuario
+     * esté viendo en pantalla — antes el Excel solo respetaba el rango de
+     * fechas e ignoraba buscar/estado/área.
      */
     private function papeletasDelRango(Request $request): array
     {
@@ -180,7 +189,11 @@ class ReporteController extends Controller
         $desde = $request->date('desde') ?? now()->startOfMonth();
         $hasta = $request->date('hasta') ?? now();
 
-        $base = Papeleta::query()->whereBetween('fecha_salida', [$desde->toDateString(), $hasta->toDateString()]);
+        $filtros = $request->only(['buscar', 'estado_id', 'area_id']);
+
+        $base = Papeleta::query()
+            ->whereBetween('fecha_salida', [$desde->toDateString(), $hasta->toDateString()])
+            ->conFiltros($filtros);
 
         // Único punto donde se decide el alcance: Jefe (y no RRHH/Admin) =
         // solo su equipo. RRHH y Admin ven todo. Un usuario podría en teoría
@@ -207,6 +220,7 @@ class ReporteController extends Controller
             'hasta' => $hasta,
             'esSoloJefe' => $esSoloJefe,
             'papeletas' => $papeletas,
+            'query' => $base,
         ];
     }
 

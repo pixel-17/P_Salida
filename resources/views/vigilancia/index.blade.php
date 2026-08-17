@@ -122,6 +122,12 @@
 
         {{-- ---------- Modo resumen: pendientes / en curso / finalizados de hoy en la sede ---------- --}}
         <div x-show="modo === 'resumen'" x-cloak class="mb-4">
+            <div x-show="errorResumen" x-cloak
+                 class="glass-card border-l-4 !border-l-rose-400 text-xs text-rose-600 p-3 mb-2 flex items-center gap-2">
+                <span>📡</span>
+                <span x-text="huboResumenAntes ? 'Sin conexión — mostrando lo último cargado.' : 'Sin conexión. No se pudo cargar la lista de hoy.'"></span>
+            </div>
+
             <div class="flex items-center justify-between px-1 mb-2">
                 <p class="text-xs text-gray-400" x-show="!cargandoResumen">
                     Actualizado <span x-text="ultimaActualizacionTexto"></span>
@@ -223,7 +229,11 @@
                 <p class="text-center text-sm text-gray-400 py-6">Buscando…</p>
             </template>
 
-            <template x-if="!cargando && q.length >= 2 && resultados.length === 0">
+            <template x-if="!cargando && errorBusqueda">
+                <p class="text-center text-sm text-rose-500 py-6">📡 Sin conexión. No se pudo buscar — intenta de nuevo.</p>
+            </template>
+
+            <template x-if="!cargando && !errorBusqueda && q.length >= 2 && resultados.length === 0">
                 <p class="text-center text-sm text-gray-400 py-6">Sin resultados para "<span x-text="q"></span>".</p>
             </template>
 
@@ -281,6 +291,8 @@
                 resumen: { pendientes: [], en_curso: [], finalizadas: [] },
                 cargandoResumen: false,
                 huboResumenAntes: false,
+                errorResumen: false,
+                errorBusqueda: false,
                 ultimaActualizacion: null,
                 horaLimite,
                 minutosParaLimite: null,
@@ -357,11 +369,19 @@
                         const res = await fetch(`{{ route('vigilancia.resumen') }}`, {
                             headers: { Accept: 'application/json' },
                         });
+                        if (!res.ok) throw new Error('respuesta-no-ok');
+
                         this.resumen = await res.json();
                         this.ultimaActualizacion = new Date();
                         this.huboResumenAntes = true;
+                        this.errorResumen = false;
                     } catch (e) {
-                        this.resumen = { pendientes: [], en_curso: [], finalizadas: [] };
+                        // No se vacía la lista: si ya había datos cargados,
+                        // se mantienen en pantalla y solo se avisa que la
+                        // actualización falló (wifi inestable de garita) —
+                        // ver una lista que se vacía sola es peor que un
+                        // aviso de "sin conexión".
+                        this.errorResumen = true;
                     } finally {
                         this.cargandoResumen = false;
                     }
@@ -370,6 +390,7 @@
                 async buscar() {
                     if (this.q.length < 2) {
                         this.resultados = [];
+                        this.errorBusqueda = false;
                         return;
                     }
 
@@ -379,10 +400,21 @@
                         const res = await fetch(`{{ route('vigilancia.buscar') }}?q=${encodeURIComponent(this.q)}`, {
                             headers: { Accept: 'application/json' },
                         });
+                        if (!res.ok) throw new Error('respuesta-no-ok');
+
                         const data = await res.json();
                         this.resultados = data.papeletas ?? [];
+                        this.errorBusqueda = false;
                     } catch (e) {
+                        // Distingue "sin resultados" (búsqueda válida, nada
+                        // que mostrar) de "falló la petición" (sin red) —
+                        // antes ambos casos vaciaban resultados en silencio
+                        // y se veían igual para el vigilante. Sí se limpian
+                        // los resultados viejos: son de una query distinta,
+                        // dejarlos puestos sería mostrar datos de otra
+                        // búsqueda como si fueran de la actual.
                         this.resultados = [];
+                        this.errorBusqueda = true;
                     } finally {
                         this.cargando = false;
                     }

@@ -8,10 +8,12 @@
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Nombre</label>
             <input type="text" name="nombre" required value="{{ old('nombre') }}" class="input-glass">
+            <x-input-error :messages="$errors->get('nombre')" />
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Máx. horas (opcional)</label>
             <input type="number" name="max_horas" value="{{ old('max_horas') }}" class="input-glass">
+            <x-input-error :messages="$errors->get('max_horas')" />
         </div>
         <div class="flex items-center gap-2">
             <input type="checkbox" name="requiere_documento" value="1" id="requiere_documento" class="rounded" @checked(old('requiere_documento'))>

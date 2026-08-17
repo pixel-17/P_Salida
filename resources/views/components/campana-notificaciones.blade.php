@@ -8,6 +8,8 @@
                text-gray-600 dark:text-gray-300 hover:text-gray-900 hover:bg-white/70 hover:-translate-y-0.5
                transition-all duration-200"
         :class="$store.notificaciones.noLeidas > 0 && 'animate-[pulse_2s_ease-in-out_1]'"
+        aria-label="Notificaciones"
+        :aria-expanded="abierto.toString()"
     >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"

@@ -38,17 +38,20 @@
                     </option>
                 @endforeach
             </select>
+            <x-input-error :messages="$errors->get('motivo_id')" />
         </div>
 
         <div>
             <x-input-label value="Destino" />
             <input type="text" name="destino" required value="{{ old('destino') }}"
                    class="input-glass" placeholder="Ej: Municipalidad Provincial">
+            <x-input-error :messages="$errors->get('destino')" />
         </div>
 
         <div>
             <x-input-label value="Detalle (opcional)" />
             <textarea name="motivo_detalle" rows="3" class="input-glass">{{ old('motivo_detalle') }}</textarea>
+            <x-input-error :messages="$errors->get('motivo_detalle')" />
         </div>
 
         @php
@@ -64,6 +67,7 @@
                 <input type="date" name="fecha_salida" id="fecha_salida" required
                        min="{{ now()->toDateString() }}" value="{{ old('fecha_salida') }}"
                        class="input-glass">
+                <x-input-error :messages="$errors->get('fecha_salida')" />
             </div>
 
             <div>
@@ -75,6 +79,7 @@
                     'minutos' => $minutosDisponibles,
                 ])
                 <p id="hora-hint" class="text-[11px] text-gray-400 mt-1.5"></p>
+                <x-input-error :messages="$errors->get('hora_salida_programada')" />
             </div>
 
             <div>
@@ -85,16 +90,20 @@
                     'required' => false,
                     'minutos' => $minutosDisponibles,
                 ])
+                <x-input-error :messages="$errors->get('hora_retorno_programada')" />
             </div>
         </div>
 
         <script>
-            // Convierte los tres selects (hora 1-12 / minuto / AM-PM) de un
-            // picker en el valor 24h "H:i" que espera el backend, y viceversa
-            // para repoblar el picker si la request anterior fue rechazada
-            // (old()). Todo el manejo de horario vive en selects propios, ya
-            // no en un <input type="time"> nativo — así el formato AM/PM es
-            // siempre explícito sin importar el idioma/config del navegador.
+            // Sincroniza dos UI alternativas del mismo horario: en móvil,
+            // tres selects (hora 1-12 / minuto / AM-PM); en escritorio
+            // (sm: y superior), un <input type="time"> nativo más rápido
+            // con teclado. Ambas escriben al mismo input hidden en formato
+            // 24h "H:i" que espera el backend, y se repueblan entre sí para
+            // que cambiar de tamaño de ventana no pierda el valor elegido.
+            // Ver time-picker.blade.php para el detalle de por qué en móvil
+            // se prefieren los selects (AM/PM siempre explícito, sin
+            // depender del idioma/config del navegador).
             function initTimePicker(id) {
                 const root = document.getElementById('picker-' + id);
                 if (!root) return null;
@@ -103,22 +112,37 @@
                 const hourSel = root.querySelector('[data-role="hour"]');
                 const minSel = root.querySelector('[data-role="minute"]');
                 const ampmSel = root.querySelector('[data-role="ampm"]');
+                // Alternativa de escritorio (sm: y superior): input nativo,
+                // hermano del contenedor de selects, no hijo — ver
+                // time-picker.blade.php.
+                const nativeInput = root.nextElementSibling?.matches('input[type="time"]')
+                    ? root.nextElementSibling
+                    : null;
 
-                function actualizar() {
+                function actualizarDesdeSelects() {
                     if (!hourSel.value || !minSel.value) {
                         hiddenInput.value = '';
+                        if (nativeInput) nativeInput.value = '';
                         return;
                     }
                     let h = parseInt(hourSel.value, 10) % 12;
                     if (ampmSel.value === 'PM') h += 12;
-                    hiddenInput.value = String(h).padStart(2, '0') + ':' + minSel.value;
+                    const valor24h = String(h).padStart(2, '0') + ':' + minSel.value;
+                    hiddenInput.value = valor24h;
+                    // El value de <input type="time"> siempre es "HH:mm" en
+                    // 24h por spec, sin importar el idioma del navegador —
+                    // se puede asignar directo, sin conversión.
+                    if (nativeInput) nativeInput.value = valor24h;
                 }
 
-                function repoblarDesdeValorInicial() {
-                    const valor = hiddenInput.value;
-                    if (!valor) return;
+                function repoblarSelectsDesde(valor24h) {
+                    if (!valor24h) {
+                        hourSel.value = '';
+                        minSel.value = '';
+                        return;
+                    }
 
-                    const [hh, mm] = valor.split(':').map(Number);
+                    const [hh, mm] = valor24h.split(':').map(Number);
                     const ampm = hh >= 12 ? 'PM' : 'AM';
                     let h12 = hh % 12;
                     if (h12 === 0) h12 = 12;
@@ -133,12 +157,23 @@
                     ampmSel.value = ampm;
                 }
 
-                [hourSel, minSel, ampmSel].forEach(sel => sel.addEventListener('change', actualizar));
+                function actualizarDesdeNativo() {
+                    hiddenInput.value = nativeInput.value;
+                    repoblarSelectsDesde(nativeInput.value);
+                }
 
-                repoblarDesdeValorInicial();
-                actualizar();
+                [hourSel, minSel, ampmSel].forEach(sel => sel.addEventListener('change', actualizarDesdeSelects));
+                if (nativeInput) nativeInput.addEventListener('change', actualizarDesdeNativo);
 
-                return actualizar;
+                // Repoblar ambas UIs desde el valor inicial (old()): así,
+                // si el usuario cambia de tamaño de ventana o de
+                // dispositivo, ambas quedan sincronizadas igual.
+                const valorInicial = hiddenInput.value;
+                repoblarSelectsDesde(valorInicial);
+                if (nativeInput) nativeInput.value = valorInicial;
+                actualizarDesdeSelects();
+
+                return actualizarDesdeSelects;
             }
 
             (function () {

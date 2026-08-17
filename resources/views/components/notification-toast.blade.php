@@ -22,7 +22,7 @@
             <div class="min-w-0 flex-1">
                 <div class="flex justify-between items-start gap-2">
                     <p class="text-sm font-semibold text-gray-900 truncate" x-text="toast.titulo"></p>
-                    <button @click.stop="$store.notificaciones.cerrarToast(toast._key)" class="text-gray-300 hover:text-gray-500 shrink-0 -mt-0.5">
+                    <button @click.stop="$store.notificaciones.cerrarToast(toast._key)" class="text-gray-300 hover:text-gray-500 shrink-0 -mt-0.5" aria-label="Cerrar notificación">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>

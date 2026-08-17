@@ -27,7 +27,7 @@
             <p class="text-sm font-bold text-white leading-tight truncate">Papeletas</p>
             <p class="text-xs text-gray-500 truncate">{{ $rolLabel }}</p>
         </div>
-        <button @click="sidebarAbierto = false" class="ml-auto text-gray-400 hover:text-white lg:hidden">
+        <button @click="sidebarAbierto = false" class="ml-auto text-gray-400 hover:text-white lg:hidden" aria-label="Cerrar menú">
             <x-icon name="close" class="w-5 h-5" />
         </button>
     </div>

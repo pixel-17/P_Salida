@@ -1,14 +1,51 @@
 @can('cancelar', $papeleta)
     <div class="glass-card p-5 mb-4 animate-fade-in-up"
-         x-data="{ abierto: false, confirmando: false, motivo: '' }">
-        <button type="button" @click="abierto = true"
+         x-data="{
+            abierto: false,
+            confirmando: false,
+            motivo: '',
+            disparador: null,
+            focusables() {
+                let selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])';
+                return [...$refs.panel.querySelectorAll(selector)].filter(el => !el.hasAttribute('disabled'));
+            },
+            primerFocusable() { return this.focusables()[0] },
+            ultimoFocusable() { return this.focusables().slice(-1)[0] },
+            siguienteFocusable() {
+                const i = this.focusables().indexOf(document.activeElement);
+                return this.focusables()[(i + 1) % (this.focusables().length + 1)] || this.primerFocusable();
+            },
+            anteriorFocusable() {
+                const i = Math.max(0, this.focusables().indexOf(document.activeElement)) - 1;
+                return this.focusables()[i] || this.ultimoFocusable();
+            },
+            abrir($event) {
+                this.disparador = $event.target;
+                this.abierto = true;
+                this.$nextTick(() => this.primerFocusable()?.focus());
+            },
+            cerrar() {
+                this.abierto = false;
+                this.confirmando = false;
+                this.disparador?.focus();
+            },
+         }">
+        <button type="button" @click="abrir($event)"
                 class="btn-glass !text-red-600 !bg-red-50/80 hover:!bg-red-100/80 border border-red-200/60 text-sm w-full sm:w-auto">
             Cancelar esta papeleta
         </button>
 
         <div x-show="abierto" x-cloak x-transition
+             x-on:keydown.escape.window="cerrar()"
              class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div @click.outside="abierto = false" class="glass-panel !bg-white p-5 max-w-sm w-full">
+            <div @click.outside="cerrar()"
+                 x-ref="panel"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-label="Cancelar papeleta"
+                 x-on:keydown.tab.prevent="$event.shiftKey || siguienteFocusable().focus()"
+                 x-on:keydown.shift.tab.prevent="anteriorFocusable().focus()"
+                 class="glass-panel !bg-white p-5 max-w-sm w-full">
                 <template x-if="!confirmando">
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-2">¿Por qué cancelas esta papeleta?</h3>
@@ -16,7 +53,7 @@
                                   class="input-glass !py-2 text-sm w-full"
                                   placeholder="Cuéntanos brevemente el motivo (mínimo 5 caracteres)"></textarea>
                         <div class="flex justify-end gap-2 mt-3">
-                            <button type="button" @click="abierto = false" class="btn-secondary text-sm">Volver</button>
+                            <button type="button" @click="cerrar()" class="btn-secondary text-sm">Volver</button>
                             <button type="button"
                                     :disabled="motivo.trim().length < 5"
                                     :class="motivo.trim().length < 5 ? 'opacity-50 cursor-not-allowed' : ''"

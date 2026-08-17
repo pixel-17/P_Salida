@@ -29,7 +29,11 @@ require __DIR__.'/auth.php';
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // No existe ruta de auto-eliminación de cuenta: eliminar usuarios es
+    // exclusivo de Administrador vía users.destroy (más abajo, gateado
+    // con role:ADMINISTRADOR), con soft-delete para no romper el
+    // historial de papeletas. Nadie puede borrar su propia cuenta desde
+    // /profile, sin excepción — ni siquiera un Administrador.
 });
 
 Route::get('/dashboard', DashboardController::class)

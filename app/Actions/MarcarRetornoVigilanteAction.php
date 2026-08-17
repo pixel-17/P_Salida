@@ -33,30 +33,36 @@ class MarcarRetornoVigilanteAction
             ]);
         }
 
-        if (! $papeleta->yaMarcoSalida()) {
-            throw ValidationException::withMessages([
-                'marcacion' => 'No se puede marcar retorno sin una salida registrada.',
-            ]);
-        }
-
-        if ($papeleta->yaMarcoRetorno()) {
-            throw ValidationException::withMessages([
-                'marcacion' => 'Esta papeleta ya tiene una marcación de retorno registrada.',
-            ]);
-        }
-
         DB::transaction(function () use ($papeleta, $vigilante) {
+            // Mismo criterio que en MarcarSalidaVigilanteAction: lock de la
+            // fila para que un doble escaneo casi simultáneo del retorno no
+            // dependa solo del UNIQUE de `marcaciones` y termine en 500.
+            $papeletaLock = Papeleta::whereKey($papeleta->id)->lockForUpdate()->first();
+            $papeletaLock->load('marcaciones');
+
+            if (! $papeletaLock->yaMarcoSalida()) {
+                throw ValidationException::withMessages([
+                    'marcacion' => 'No se puede marcar retorno sin una salida registrada.',
+                ]);
+            }
+
+            if ($papeletaLock->yaMarcoRetorno()) {
+                throw ValidationException::withMessages([
+                    'marcacion' => 'Esta papeleta ya tiene una marcación de retorno registrada.',
+                ]);
+            }
+
             Marcacion::create([
-                'papeleta_id' => $papeleta->id,
+                'papeleta_id' => $papeletaLock->id,
                 'tipo' => TipoMarcacion::RETORNO->value,
                 'registrado_por_user_id' => $vigilante->id,
             ]);
 
-            $estadoAnterior = $papeleta->estado->codigo;
-            $papeleta->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::FINALIZADO)->id]);
+            $estadoAnterior = $papeletaLock->estado->codigo;
+            $papeletaLock->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::FINALIZADO)->id]);
 
             HistorialPapeleta::registrar(
-                $papeleta, $vigilante, 'MARCO_RETORNO_VIGILANTE', $estadoAnterior, EstadoPapeleta::FINALIZADO->value,
+                $papeletaLock, $vigilante, 'MARCO_RETORNO_VIGILANTE', $estadoAnterior, EstadoPapeleta::FINALIZADO->value,
                 "Confirmado por vigilante: {$vigilante->name}"
             );
         });

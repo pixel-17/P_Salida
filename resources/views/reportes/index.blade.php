@@ -1,17 +1,24 @@
 <x-app-layout>
 
-    {{-- El título va dentro de la tarjeta de encabezado (_filtro-principal),
-         junto con la descripción del alcance (global/equipo) y los filtros,
-         para no repetirlo dos veces en la misma pantalla. --}}
+    {{-- El título va dentro de la barra de filtros (_barra-filtros), junto
+         con la descripción del alcance (global/equipo), para no repetirlo.
+         "tab" vive acá arriba porque lo comparten: la barra de filtros
+         (hidden que preserva la pestaña al recargar), el nav de pestañas
+         y los 4 paneles. Se inicializa desde ?tab= para que la pestaña
+         activa sobreviva a un filtrado o a compartir el link. --}}
+    <div x-data="{ tab: (new URLSearchParams(window.location.search).get('tab')) || 'resumen' }">
 
-    @include('reportes.partials.index._filtro-principal')
-    @include('reportes.partials.index._resumen')
-    @include('reportes.partials.index._destacados')
-    @include('reportes.partials.index._cuadro-trabajadores')
-    @include('reportes.partials.index._graficos-trabajadores-areas')
-    @include('reportes.partials.index._motivos-horas-fuera')
-    @include('reportes.partials.index._horas-por-motivo')
-    @include('reportes.partials.index._detalle-salidas')
+        @include('reportes.partials.index._barra-filtros')
+        @include('reportes.partials.index._resumen')
+        @include('reportes.partials.index._tabs-nav')
+
+        @include('reportes.partials.index._panel-resumen')
+        @include('reportes.partials.index._panel-trabajador')
+        @include('reportes.partials.index._panel-area-motivo')
+        @include('reportes.partials.index._panel-detalle')
+
+    </div>
+
     @include('reportes.partials.index._scripts-chart')
 
 </x-app-layout>

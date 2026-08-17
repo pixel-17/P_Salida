@@ -25,8 +25,10 @@
 const INTERVALO_MS = 12000;
 
 /**
- * Beep sintetizado con Web Audio API (dos tonos cortos, tipo "ding").
- * Se genera en el navegador: no depende de ningún archivo de audio externo.
+ * Campanita sintetizada con Web Audio API: arpegio ascendente de 3 notas
+ * (acorde mayor Do-Mi-Sol), onda triangular pasada por un filtro pasa-bajos
+ * para redondear el timbre. Se genera en el navegador: no depende de
+ * ningún archivo de audio externo.
  */
 function reproducirSonidoAviso() {
     try {
@@ -34,24 +36,34 @@ function reproducirSonidoAviso() {
         const ctx = new Ctx();
         const ahora = ctx.currentTime;
 
-        [880, 1320].forEach((frecuencia, i) => {
+        // Pasa-bajos suave: sin esto, la onda triangular suena metálica.
+        // Con el filtro queda cálida, como una campanita, no un beep.
+        const filtro = ctx.createBiquadFilter();
+        filtro.type = 'lowpass';
+        filtro.frequency.value = 4000;
+        filtro.connect(ctx.destination);
+
+        // Do5 - Mi5 - Sol5: acorde mayor ascendente, sensación "positiva"
+        // (el mismo recurso que usan la mayoría de sonidos de notificación
+        // de apps de mensajería), en vez del beep de dos tonos anterior.
+        [523.25, 659.25, 783.99].forEach((frecuencia, i) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
 
-            osc.type = 'sine';
+            osc.type = 'triangle';
             osc.frequency.value = frecuencia;
 
-            const inicio = ahora + i * 0.11;
+            const inicio = ahora + i * 0.09;
             gain.gain.setValueAtTime(0, inicio);
-            gain.gain.linearRampToValueAtTime(0.15, inicio + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.001, inicio + 0.18);
+            gain.gain.linearRampToValueAtTime(0.16, inicio + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.001, inicio + 0.35);
 
-            osc.connect(gain).connect(ctx.destination);
+            osc.connect(gain).connect(filtro);
             osc.start(inicio);
-            osc.stop(inicio + 0.2);
+            osc.stop(inicio + 0.4);
         });
 
-        setTimeout(() => ctx.close(), 500);
+        setTimeout(() => ctx.close(), 700);
     } catch (e) {
         // Navegadores que bloquean audio sin interacción previa: se ignora,
         // la campana/contador ya se actualizó visualmente igual.

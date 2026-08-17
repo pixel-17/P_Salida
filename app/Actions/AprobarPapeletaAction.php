@@ -24,17 +24,30 @@ class AprobarPapeletaAction
      */
     public function execute(Papeleta $papeleta, User $aprobador, ?string $comentario = null): Papeleta
     {
+        // Chequeo temprano (sin lock) para no ni siquiera abrir transacción si
+        // el estado visible ya no permite decidir; el chequeo que de verdad
+        // importa es el de adentro, contra la fila bloqueada.
         Gate::forUser($aprobador)->authorize('decidir', $papeleta);
 
-        $estadoAnteriorCodigo = $papeleta->estado->codigo;
-        $esJefeDecidiendo = $estadoAnteriorCodigo === EstadoPapeleta::SOLICITADO->value;
-        $nuevoCodigo = $esJefeDecidiendo ? EstadoPapeleta::APROBADO_JEFE : EstadoPapeleta::APROBADO_RRHH;
+        $esJefeDecidiendo = DB::transaction(function () use ($papeleta, $aprobador, $comentario) {
+            // SELECT ... FOR UPDATE: si dos aprobadores (o el mismo con doble
+            // clic) llegan casi al mismo tiempo, el segundo espera a que el
+            // primero termine la transacción y luego relee el estado ya
+            // actualizado, así que su propio authorize('decidir', ...) falla
+            // limpio en vez de generar un segundo FlujoAprobacion/notificación
+            // duplicados sobre una papeleta que ya cambió de estado.
+            $papeletaLock = Papeleta::whereKey($papeleta->id)->lockForUpdate()->first();
 
-        DB::transaction(function () use ($papeleta, $aprobador, $comentario, $esJefeDecidiendo, $nuevoCodigo, $estadoAnteriorCodigo) {
-            $papeleta->update(['estado_id' => Estado::porCodigo($nuevoCodigo)->id]);
+            Gate::forUser($aprobador)->authorize('decidir', $papeletaLock);
+
+            $estadoAnteriorCodigo = $papeletaLock->estado->codigo;
+            $esJefeDecidiendo = $estadoAnteriorCodigo === EstadoPapeleta::SOLICITADO->value;
+            $nuevoCodigo = $esJefeDecidiendo ? EstadoPapeleta::APROBADO_JEFE : EstadoPapeleta::APROBADO_RRHH;
+
+            $papeletaLock->update(['estado_id' => Estado::porCodigo($nuevoCodigo)->id]);
 
             FlujoAprobacion::create([
-                'papeleta_id' => $papeleta->id,
+                'papeleta_id' => $papeletaLock->id,
                 'usuario_id' => $aprobador->id,
                 'rol' => $esJefeDecidiendo ? RolUsuario::JEFE->value : RolUsuario::RRHH->value,
                 'accion' => AccionFlujo::APROBADO->value,
@@ -42,8 +55,10 @@ class AprobarPapeletaAction
             ]);
 
             HistorialPapeleta::registrar(
-                $papeleta, $aprobador, 'APROBADA', $estadoAnteriorCodigo, $nuevoCodigo->value, $comentario
+                $papeletaLock, $aprobador, 'APROBADA', $estadoAnteriorCodigo, $nuevoCodigo->value, $comentario
             );
+
+            return $esJefeDecidiendo;
         });
 
         $papeleta->refresh();

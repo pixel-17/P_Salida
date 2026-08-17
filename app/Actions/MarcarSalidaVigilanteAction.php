@@ -32,24 +32,33 @@ class MarcarSalidaVigilanteAction
             ]);
         }
 
-        if ($papeleta->yaMarcoSalida()) {
-            throw ValidationException::withMessages([
-                'marcacion' => 'Esta papeleta ya tiene una marcación de salida registrada.',
-            ]);
-        }
-
         DB::transaction(function () use ($papeleta, $vigilante) {
+            // Lock de la fila: dos escaneos casi simultáneos del mismo QR (dos
+            // dispositivos, o doble tap) ya no dependen únicamente del UNIQUE
+            // de `marcaciones` (que igual sigue ahí como última barrera) —
+            // el segundo espera el lock, relee y encuentra yaMarcoSalida()
+            // en true, así que sale con el mismo mensaje de validación de
+            // siempre en vez de un 500 por QueryException.
+            $papeletaLock = Papeleta::whereKey($papeleta->id)->lockForUpdate()->first();
+            $papeletaLock->load('marcaciones');
+
+            if ($papeletaLock->yaMarcoSalida()) {
+                throw ValidationException::withMessages([
+                    'marcacion' => 'Esta papeleta ya tiene una marcación de salida registrada.',
+                ]);
+            }
+
             Marcacion::create([
-                'papeleta_id' => $papeleta->id,
+                'papeleta_id' => $papeletaLock->id,
                 'tipo' => TipoMarcacion::SALIDA->value,
                 'registrado_por_user_id' => $vigilante->id,
             ]);
 
-            $estadoAnterior = $papeleta->estado->codigo;
-            $papeleta->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::EN_CURSO)->id]);
+            $estadoAnterior = $papeletaLock->estado->codigo;
+            $papeletaLock->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::EN_CURSO)->id]);
 
             HistorialPapeleta::registrar(
-                $papeleta, $vigilante, 'MARCO_SALIDA_VIGILANTE', $estadoAnterior, EstadoPapeleta::EN_CURSO->value,
+                $papeletaLock, $vigilante, 'MARCO_SALIDA_VIGILANTE', $estadoAnterior, EstadoPapeleta::EN_CURSO->value,
                 "Confirmado por vigilante: {$vigilante->name}"
             );
         });
