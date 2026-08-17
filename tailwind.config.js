@@ -41,6 +41,11 @@ export default {
                 // Usada en tarjetas de acceso rápido / avatares con
                 // degradado (dashboard admin); tampoco estaba definida.
                 glass: '0 4px 14px -4px rgba(37, 73, 234, 0.35)',
+                // shadow-glass-lg: usada en dropdowns, toasts, la campana
+                // de notificaciones y los íconos "hero" de login/errores/
+                // bloqueo — tampoco estaba definida, así que esos paneles
+                // flotantes se veían sin elevación (planos).
+                'glass-lg': '0 16px 40px -12px rgba(15, 15, 20, 0.28)',
             },
         },
     },

@@ -127,6 +127,18 @@
         // 'denied': no insistimos, el usuario ya dijo que no desde el navegador.
     });
 
+    async function borrarSuscripcion(endpoint) {
+        await fetch('/push-subscriptions', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrfToken(),
+            },
+            body: JSON.stringify({ endpoint }),
+        });
+    }
+
     // Expuesto por si se quiere disparar desde un botón propio (ej. en Perfil).
     window.activarNotificacionesPush = async function () {
         const permiso = await Notification.requestPermission();
@@ -135,5 +147,102 @@
             return true;
         }
         return false;
+    };
+
+    /**
+     * Silencia las notificaciones push en ESTE dispositivo/navegador:
+     * cancela la suscripción del lado del navegador y la marca como
+     * inactiva en el servidor (sin borrar el registro, ver destroy()).
+     * No afecta la campana/toast dentro de la web, solo el push nativo.
+     */
+    window.silenciarNotificacionesPush = async function () {
+        if (!('serviceWorker' in navigator)) return false;
+
+        const registro = await navigator.serviceWorker.ready;
+        const subscription = await registro.pushManager.getSubscription();
+
+        if (!subscription) return true;
+
+        const endpoint = subscription.endpoint;
+        await subscription.unsubscribe();
+        await borrarSuscripcion(endpoint);
+        return true;
+    };
+
+    /**
+     * Estado actual de las notificaciones push para pintar la UI de Perfil.
+     */
+    window.estadoNotificacionesPush = async function () {
+        const soportado = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
+        if (!soportado) {
+            return { soportado: false, permiso: 'unsupported', suscrito: false };
+        }
+
+        const permiso = Notification.permission;
+        let suscrito = false;
+
+        if (permiso === 'granted') {
+            try {
+                const registro = await navigator.serviceWorker.ready;
+                suscrito = !!(await registro.pushManager.getSubscription());
+            } catch (e) {
+                suscrito = false;
+            }
+        }
+
+        return { soportado: true, permiso, suscrito };
+    };
+
+    // ---------- PWA: "Instalar app" ----------
+    // Chrome/Edge/Android disparan este evento cuando la app es instalable;
+    // Safari/iOS no lo soportan (ahí no hay forma de disparar el prompt
+    // por JS, el usuario instala desde "Compartir > Agregar a inicio").
+    window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        window.__promptInstalacionApp = event;
+        window.dispatchEvent(new CustomEvent('pwa-install-available'));
+    });
+
+    window.addEventListener('appinstalled', () => {
+        window.__promptInstalacionApp = null;
+        window.dispatchEvent(new CustomEvent('pwa-install-done'));
+    });
+
+    window.appEsInstalable = function () {
+        return !!window.__promptInstalacionApp;
+    };
+
+    window.appYaInstalada = function () {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    };
+
+    /**
+     * Mensaje manual para cuando no hay prompt automático disponible:
+     * Safari/iOS nunca lo dispara, y Chrome/Android puede tardar (necesita
+     * cumplir su heurística de "engagement" antes de ofrecerlo).
+     */
+    window.instruccionesInstalarApp = function () {
+        const ua = navigator.userAgent;
+        const esIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+        const esAndroid = /Android/.test(ua);
+
+        if (esIOS) {
+            return 'Toca el botón Compartir de Safari y elige "Agregar a inicio".';
+        }
+        if (esAndroid) {
+            return 'Abre el menú (⋮) del navegador y elige "Instalar app" o "Agregar a pantalla de inicio".';
+        }
+        return 'Abre el menú del navegador y busca la opción "Instalar" o "Agregar a pantalla de inicio".';
+    };
+
+    window.instalarApp = async function () {
+        const evento = window.__promptInstalacionApp;
+        if (!evento) return 'no-disponible';
+
+        evento.prompt();
+        const resultado = await evento.userChoice;
+        window.__promptInstalacionApp = null;
+        return resultado.outcome; // 'accepted' | 'dismissed'
     };
 })();

@@ -12,11 +12,11 @@
 
 :root {
     --surface: #ffffff;
-    --surface-muted: #eef1f7;
-    --border-soft: #dde3ec;
-    --ink-900: #0f172a;
-    --sidebar-bg: #111827;
-    --sidebar-bg-active: #1f2937;
+    --surface-muted: #f5f5f7;
+    --border-soft: #e3e3e8;
+    --ink-900: #18181b;
+    --sidebar-bg: #18181b;
+    --sidebar-bg-active: #26262b;
     accent-color: #3b6cf6;
 }
 
@@ -27,16 +27,19 @@ html {
 body.app-bg {
     background: var(--surface-muted);
     min-height: 100vh;
-    color: #1e293b;
+    color: #18181b;
 }
 
+/* Modo oscuro: gris carbón neutro (zinc), a propósito SIN tinte azul/
+   marino — antes usaba #161c2c/#0b0f19/#111827, que llevan un canal azul
+   más alto que rojo/verde y se leían como "azul oscuro". Aquí R≈G≈B. */
 .dark body.app-bg,
 .dark .app-bg {
-    --surface: #161c2c;
-    --surface-muted: #0b0f19;
-    --border-soft: #232a3b;
+    --surface: #1f1f23;
+    --surface-muted: #121214;
+    --border-soft: #2d2d33;
     background: var(--surface-muted);
-    color: #e5e7eb;
+    color: #e4e4e7;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -68,13 +71,13 @@ body.app-bg {
 
 .glass-card:hover {
     box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.14);
-    border-color: #c9d1de;
+    border-color: #cbcbd1;
     transform: none;
 }
 
 .dark .glass-card:hover {
     box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.45);
-    border-color: #2b3245;
+    border-color: #34343b;
 }
 
 .glass-panel {
@@ -88,9 +91,9 @@ body.app-bg {
    ahora se remapean a tonos neutros planos, en claro y oscuro. */
 .hover\:bg-white\/70:hover,
 .hover\:bg-white\/60:hover,
-.hover\:bg-white\/50:hover { background-color: #eef1f7 !important; }
+.hover\:bg-white\/50:hover { background-color: #f0f0f3 !important; }
 .bg-white\/50, .bg-white\/40, .bg-white\/60,
-.bg-white\/70, .bg-white\/80 { background-color: #f4f6fa; }
+.bg-white\/70, .bg-white\/80 { background-color: #f5f5f7; }
 .border-white\/40, .border-white\/50, .border-white\/60 { border-color: var(--border-soft); }
 .divide-white\/40 > :not([hidden]) ~ :not([hidden]),
 .divide-white\/50 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border-soft); }
@@ -99,25 +102,40 @@ body.app-bg {
 .dark .hover\:bg-white\/70:hover { background-color: rgba(255,255,255,0.06) !important; }
 .dark .bg-brand-50\/50 { background-color: rgba(37, 73, 234, 0.12); }
 
-/* Texto: ajuste automático en modo oscuro sin tocar cada vista */
+/* Texto: ajuste automático en modo oscuro sin tocar cada vista.
+   Escala neutra (zinc), no gris azulado, para que no reaparezca el
+   tinte "marino" en textos y superficies secundarias. */
 .dark { color-scheme: dark; }
 .dark .text-gray-800,
-.dark .text-gray-900 { color: #e5e7eb; }
-.dark .text-gray-700 { color: #d1d5db; }
-.dark .text-gray-600 { color: #a7afc0; }
-.dark .text-gray-500 { color: #8b93a3; }
-.dark .text-gray-400 { color: #6b7280; }
+.dark .text-gray-900 { color: #e4e4e7; }
+.dark .text-gray-700 { color: #d4d4d8; }
+.dark .text-gray-600 { color: #b0b0b8; }
+.dark .text-gray-500 { color: #8f8f99; }
+.dark .text-gray-400 { color: #71717a; }
 .dark .bg-white\/50,
 .dark .bg-white\/40,
 .dark .bg-white\/60,
 .dark .bg-white\/70,
 .dark .bg-white\/80 { background-color: rgba(255,255,255,0.05); }
+
+/* bg-gray-50/100 y border-gray-100/200: usadas en varias vistas (badges,
+   separadores, barras de progreso) sin variante dark: — sin esto quedan
+   como parches claros sobre fondo oscuro. */
+.dark .bg-gray-50,
+.dark .bg-gray-50\/80,
+.dark .bg-gray-100,
+.dark .bg-gray-100\/80 { background-color: rgba(255,255,255,0.06); }
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-200\/60 { border-color: rgba(255,255,255,0.08); }
+.dark .hover\:bg-gray-50:hover { background-color: rgba(255,255,255,0.06) !important; }
+.dark .hover\:border-gray-200:hover { border-color: rgba(255,255,255,0.14) !important; }
 .dark .border-white\/40,
 .dark .border-white\/50,
 .dark .border-white\/60 { border-color: rgba(255,255,255,0.08); }
 .dark .divide-white\/40 > :not([hidden]) ~ :not([hidden]),
 .dark .divide-white\/50 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.08); }
-.dark ::-webkit-scrollbar-thumb { background: #374151; background-clip: content-box; }
+.dark ::-webkit-scrollbar-thumb { background: #3a3a42; background-clip: content-box; }
 
 /* ------------------------------------------------------------------ */
 /*  Botones                                                             */
@@ -141,8 +159,9 @@ body.app-bg {
     background: var(--surface);
     border: 1px solid var(--border-soft);
 }
-.btn-secondary:hover { background: var(--surface-muted); border-color: #cbd3e1; }
-.dark .btn-secondary { color: #e5e7eb; }
+.btn-secondary:hover { background: var(--surface-muted); border-color: #cbcbd1; }
+.dark .btn-secondary { color: #e4e4e7; }
+.dark .btn-secondary:hover { border-color: #3a3a42; }
 
 .btn-danger {
     @apply btn-glass text-white;
@@ -155,16 +174,19 @@ body.app-bg {
 /* ------------------------------------------------------------------ */
 .input-glass {
     @apply w-full rounded-xl px-4 py-2.5 text-sm
-           text-slate-800 placeholder-slate-400 transition-all duration-150
+           transition-all duration-150
            focus:outline-none;
+    color: #27272a;
     background: var(--surface);
-    border: 1px solid #d7dde8;
+    border: 1px solid #d4d4d9;
 }
+.input-glass::placeholder { color: #a1a1aa; }
 .input-glass:focus {
     border-color: #3b6cf6;
     box-shadow: 0 0 0 3px rgba(59, 108, 246, 0.15);
 }
-.dark .input-glass { color: #e5e7eb; border-color: #2b3245; }
+.dark .input-glass { color: #e4e4e7; border-color: #34343b; }
+.dark .input-glass::placeholder { color: #71717a; }
 .dark .input-glass:focus {
     border-color: #5e91ff;
     box-shadow: 0 0 0 3px rgba(94, 145, 255, 0.18);
@@ -174,12 +196,13 @@ body.app-bg {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-    background: #cbd3e1;
+    background: #c7c7ce;
     border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: content-box;
 }
-::-webkit-scrollbar-thumb:hover { background: #a8b2c4; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #a0a0a8; background-clip: content-box; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #48484f; background-clip: content-box; }
 
 /* Utilidad: aparición escalonada de tarjetas en listas */
 .stagger > * {
@@ -197,6 +220,34 @@ body.app-bg {
 @keyframes fade-in-up {
     0% { opacity: 0; transform: translateY(8px); }
     100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Flotación sutil para íconos hero (login, errores, bloqueo de puerta).
+   Usaba la clase .animate-float en 7 vistas pero nunca estuvo definida,
+   así que esos íconos quedaban estáticos. */
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+.animate-float { animation: float 3.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-float { animation: none !important; }
+}
+
+/* En oscuro una sombra clara casi no se nota sobre el fondo carbón:
+   se usa una sombra negra más profunda para que dropdowns, toasts y los
+   íconos "hero" mantengan sensación de elevación. */
+.dark .shadow-glass-lg {
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6);
+}
+
+/* Marca de avatar / logo del sidebar: degradado con el color de marca.
+   .avatar-mark y .sidebar-brand-mark se usaban en topbar/sidebar/mobile-topbar
+   pero tampoco estaban definidas — el avatar y el logo se veían sin color. */
+.avatar-mark,
+.sidebar-brand-mark {
+    background: linear-gradient(135deg, #5e91ff 0%, #2549ea 100%);
 }
 
 /* ==================================================================== */
@@ -245,7 +296,7 @@ body.app-bg {
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #6b7280;
+    color: #71717a;
     padding: 1rem 0.75rem 0.375rem;
 }
 
@@ -257,14 +308,14 @@ body.app-bg {
     border-radius: 0.75rem;
     font-size: 0.875rem;
     font-weight: 500;
-    color: #9ca3af;
+    color: #a1a1aa;
     transition: background 0.15s ease, color 0.15s ease;
     position: relative;
 }
 
 .sidebar-link:hover {
     background: rgba(255, 255, 255, 0.06);
-    color: #f3f4f6;
+    color: #f4f4f5;
 }
 
 .sidebar-link.is-active {
@@ -301,7 +352,7 @@ body.app-bg {
 .sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.55);
+    background: rgba(9, 9, 11, 0.6);
     z-index: 39;
 }
 
@@ -338,12 +389,12 @@ body.app-bg {
     width: 2.375rem;
     height: 2.375rem;
     border-radius: 9999px;
-    color: #64748b;
+    color: #71717a;
     background: transparent;
     transition: background 0.15s ease, color 0.15s ease;
 }
-.icon-btn:hover { background: var(--surface-muted); color: #1e293b; }
-.dark .icon-btn:hover { background: rgba(255,255,255,0.06); color: #e5e7eb; }
+.icon-btn:hover { background: var(--surface-muted); color: #18181b; }
+.dark .icon-btn:hover { background: rgba(255,255,255,0.06); color: #e4e4e7; }
 
 /* ==================================================================== */
 /*  Layout: Mobile shell (Trabajador / Vigilante)                       */
@@ -391,7 +442,7 @@ body.app-bg {
     padding: 0.5rem 0.25rem 0.625rem;
     font-size: 0.6875rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: #a1a1aa;
     position: relative;
 }
 

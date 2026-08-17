@@ -25,6 +25,10 @@
         </div>
 
         <div class="glass-panel p-6 sm:p-8">
+            @include('profile.partials.notification-settings')
+        </div>
+
+        <div class="glass-panel p-6 sm:p-8">
             <section class="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                     <h2 class="text-lg font-bold text-gray-800">Cerrar sesión</h2>
