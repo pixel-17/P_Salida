@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="es">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -24,20 +24,23 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-gray-900 antialiased app-bg">
-        <div class="relative z-10 min-h-screen flex flex-col sm:justify-center items-center pt-10 sm:pt-0 px-4">
+    <body class="font-sans antialiased app-bg auth-bg">
+        <div class="relative min-h-screen flex flex-col items-center justify-center px-4 py-10">
 
-            <a href="/" class="animate-fade-in-up">
-                <div class="w-20 h-20 rounded-3xl glass-strong flex items-center justify-center shadow-glass-lg animate-float">
-                    <x-application-logo class="w-11 h-11 fill-current text-brand-600" />
+            <a href="/" class="flex flex-col items-center gap-3 animate-fade-in-up">
+                <div class="w-16 h-16 rounded-2xl sidebar-brand-mark flex items-center justify-center shadow-glass-lg animate-float">
+                    <x-application-logo class="w-8 h-8 fill-current text-white" />
                 </div>
+                <span class="text-sm font-bold tracking-wide text-gray-700 uppercase">
+                    {{ config('app.name', 'Papeletas') }}
+                </span>
             </a>
 
-            <div class="w-full sm:max-w-md mt-8 px-6 py-8 sm:px-8 glass-panel animate-scale-in">
+            <div class="w-full sm:max-w-md mt-7 px-6 py-8 sm:px-9 sm:py-9 glass-panel !rounded-3xl animate-scale-in">
                 {{ $slot }}
             </div>
 
-            <p class="mt-8 text-xs text-gray-500 animate-fade-in">
+            <p class="mt-8 text-xs text-gray-400 animate-fade-in">
                 &copy; {{ date('Y') }} {{ config('app.name', 'Sistema de Papeletas') }}
             </p>
         </div>

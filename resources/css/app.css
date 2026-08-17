@@ -7,7 +7,7 @@
 }
 
 /* ==================================================================== */
-/*  Sistema de diseño "Papeletas" — plano, elegante, sin glassmorfismo  */
+/*  Sistema de diseño "Papeletas"  elegante, con glassmorfismo  */
 /* ==================================================================== */
 
 :root {
@@ -17,7 +17,7 @@
     --ink-900: #18181b;
     --sidebar-bg: #18181b;
     --sidebar-bg-active: #26262b;
-    accent-color: #3b6cf6;
+    accent-color: #10b981;
 }
 
 html {
@@ -33,6 +33,7 @@ body.app-bg {
 /* Modo oscuro: gris carbón neutro (zinc), a propósito SIN tinte azul/
    marino — antes usaba #161c2c/#0b0f19/#111827, que llevan un canal azul
    más alto que rojo/verde y se leían como "azul oscuro". Aquí R≈G≈B. */
+
 .dark body.app-bg,
 .dark .app-bg {
     --surface: #1f1f23;
@@ -40,6 +41,31 @@ body.app-bg {
     --border-soft: #2d2d33;
     background: var(--surface-muted);
     color: #e4e4e7;
+}
+
+/* Fondo de las pantallas de acceso (login, recuperar contraseña, etc.):
+   un degradado radial muy sutil con el color de marca, para que no se
+   sienta como una pantalla gris plana sin perder la base "sin
+   glassmorfismo" del resto del sistema. */
+
+.auth-bg {
+    background:
+        radial-gradient(
+            60rem 32rem at 50% -10%,
+            rgba(16, 185, 129, 0.10),
+            transparent 65%
+        ),
+        var(--surface-muted);
+}
+
+.dark .auth-bg {
+    background:
+        radial-gradient(
+            60rem 32rem at 50% -10%,
+            rgba(16, 185, 129, 0.14),
+            transparent 65%
+        ),
+        var(--surface-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -54,6 +80,7 @@ body.app-bg {
 /* ------------------------------------------------------------------ */
 /*  Superficies: tarjetas y paneles planos                            */
 /* ------------------------------------------------------------------ */
+
 .glass,
 .glass-strong,
 .glass-dark {
@@ -89,57 +116,127 @@ body.app-bg {
 
 /* Superposiciones white/NN: antes se apoyaban en el desenfoque del glass,
    ahora se remapean a tonos neutros planos, en claro y oscuro. */
+
 .hover\:bg-white\/70:hover,
 .hover\:bg-white\/60:hover,
-.hover\:bg-white\/50:hover { background-color: #f0f0f3 !important; }
-.bg-white\/50, .bg-white\/40, .bg-white\/60,
-.bg-white\/70, .bg-white\/80 { background-color: #f5f5f7; }
-.border-white\/40, .border-white\/50, .border-white\/60 { border-color: var(--border-soft); }
+.hover\:bg-white\/50:hover {
+    background-color: #f0f0f3 !important;
+}
+
+.bg-white\/50,
+.bg-white\/40,
+.bg-white\/60,
+.bg-white\/70,
+.bg-white\/80 {
+    background-color: #f5f5f7;
+}
+
+.border-white\/40,
+.border-white\/50,
+.border-white\/60 {
+    border-color: var(--border-soft);
+}
+
 .divide-white\/40 > :not([hidden]) ~ :not([hidden]),
-.divide-white\/50 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border-soft); }
-.ring-white\/80 { --tw-ring-color: var(--surface); }
+.divide-white\/50 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--border-soft);
+}
+
+.ring-white\/80 {
+    --tw-ring-color: var(--surface);
+}
+
 .dark .hover\:bg-white\/60:hover,
-.dark .hover\:bg-white\/70:hover { background-color: rgba(255,255,255,0.06) !important; }
-.dark .bg-brand-50\/50 { background-color: rgba(37, 73, 234, 0.12); }
+.dark .hover\:bg-white\/70:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.dark .bg-brand-50\/50 {
+    background-color: rgba(5, 150, 105, 0.12);
+}
 
 /* Texto: ajuste automático en modo oscuro sin tocar cada vista.
    Escala neutra (zinc), no gris azulado, para que no reaparezca el
    tinte "marino" en textos y superficies secundarias. */
-.dark { color-scheme: dark; }
+
+.dark {
+    color-scheme: dark;
+}
+
 .dark .text-gray-800,
-.dark .text-gray-900 { color: #e4e4e7; }
-.dark .text-gray-700 { color: #d4d4d8; }
-.dark .text-gray-600 { color: #b0b0b8; }
-.dark .text-gray-500 { color: #8f8f99; }
-.dark .text-gray-400 { color: #71717a; }
+.dark .text-gray-900 {
+    color: #e4e4e7;
+}
+
+.dark .text-gray-700 {
+    color: #d4d4d8;
+}
+
+.dark .text-gray-600 {
+    color: #b0b0b8;
+}
+
+.dark .text-gray-500 {
+    color: #8f8f99;
+}
+
+.dark .text-gray-400 {
+    color: #71717a;
+}
+
 .dark .bg-white\/50,
 .dark .bg-white\/40,
 .dark .bg-white\/60,
 .dark .bg-white\/70,
-.dark .bg-white\/80 { background-color: rgba(255,255,255,0.05); }
+.dark .bg-white\/80 {
+    background-color: rgba(255, 255, 255, 0.05);
+}
 
 /* bg-gray-50/100 y border-gray-100/200: usadas en varias vistas (badges,
    separadores, barras de progreso) sin variante dark: — sin esto quedan
    como parches claros sobre fondo oscuro. */
+
 .dark .bg-gray-50,
 .dark .bg-gray-50\/80,
 .dark .bg-gray-100,
-.dark .bg-gray-100\/80 { background-color: rgba(255,255,255,0.06); }
+.dark .bg-gray-100\/80 {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
 .dark .border-gray-100,
 .dark .border-gray-200,
-.dark .border-gray-200\/60 { border-color: rgba(255,255,255,0.08); }
-.dark .hover\:bg-gray-50:hover { background-color: rgba(255,255,255,0.06) !important; }
-.dark .hover\:border-gray-200:hover { border-color: rgba(255,255,255,0.14) !important; }
+.dark .border-gray-200\/60 {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .hover\:bg-gray-50:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.dark .hover\:border-gray-200:hover {
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
 .dark .border-white\/40,
 .dark .border-white\/50,
-.dark .border-white\/60 { border-color: rgba(255,255,255,0.08); }
+.dark .border-white\/60 {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
 .dark .divide-white\/40 > :not([hidden]) ~ :not([hidden]),
-.dark .divide-white\/50 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.08); }
-.dark ::-webkit-scrollbar-thumb { background: #3a3a42; background-clip: content-box; }
+.dark .divide-white\/50 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #3a3a42;
+    background-clip: content-box;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Botones                                                             */
 /* ------------------------------------------------------------------ */
+
 .btn-glass {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold
            transition-all duration-150 select-none;
@@ -147,31 +244,57 @@ body.app-bg {
 
 .btn-primary {
     @apply btn-glass text-white;
-    background: #2549ea;
+    background: #059669;
 }
-.btn-primary:hover { background: #1e39d1; }
-.btn-primary:active { transform: scale(0.98); }
-.dark .btn-primary { background: #3b6cf6; }
-.dark .btn-primary:hover { background: #5e91ff; }
+
+.btn-primary:hover {
+    background: #047857;
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.dark .btn-primary {
+    background: #10b981;
+}
+
+.dark .btn-primary:hover {
+    background: #34d399;
+}
 
 .btn-secondary {
     @apply btn-glass text-slate-700;
     background: var(--surface);
     border: 1px solid var(--border-soft);
 }
-.btn-secondary:hover { background: var(--surface-muted); border-color: #cbcbd1; }
-.dark .btn-secondary { color: #e4e4e7; }
-.dark .btn-secondary:hover { border-color: #3a3a42; }
+
+.btn-secondary:hover {
+    background: var(--surface-muted);
+    border-color: #cbcbd1;
+}
+
+.dark .btn-secondary {
+    color: #e4e4e7;
+}
+
+.dark .btn-secondary:hover {
+    border-color: #3a3a42;
+}
 
 .btn-danger {
     @apply btn-glass text-white;
     background: #e11d48;
 }
-.btn-danger:hover { background: #be123c; }
+
+.btn-danger:hover {
+    background: #be123c;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Inputs                                                              */
 /* ------------------------------------------------------------------ */
+
 .input-glass {
     @apply w-full rounded-xl px-4 py-2.5 text-sm
            transition-all duration-150
@@ -180,64 +303,136 @@ body.app-bg {
     background: var(--surface);
     border: 1px solid #d4d4d9;
 }
-.input-glass::placeholder { color: #a1a1aa; }
-.input-glass:focus {
-    border-color: #3b6cf6;
-    box-shadow: 0 0 0 3px rgba(59, 108, 246, 0.15);
+
+.input-glass::placeholder {
+    color: #a1a1aa;
 }
-.dark .input-glass { color: #e4e4e7; border-color: #34343b; }
-.dark .input-glass::placeholder { color: #71717a; }
+
+.input-glass:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.dark .input-glass {
+    color: #e4e4e7;
+    border-color: #34343b;
+}
+
+.dark .input-glass::placeholder {
+    color: #71717a;
+}
+
 .dark .input-glass:focus {
-    border-color: #5e91ff;
-    box-shadow: 0 0 0 3px rgba(94, 145, 255, 0.18);
+    border-color: #34d399;
+    box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18);
 }
 
 /* Scrollbar sutil */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 ::-webkit-scrollbar-thumb {
     background: #c7c7ce;
     border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: content-box;
 }
-::-webkit-scrollbar-thumb:hover { background: #a0a0a8; background-clip: content-box; }
-.dark ::-webkit-scrollbar-thumb:hover { background: #48484f; background-clip: content-box; }
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a8;
+    background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #48484f;
+    background-clip: content-box;
+}
 
 /* Utilidad: aparición escalonada de tarjetas en listas */
+
 .stagger > * {
     animation: fade-in-up 0.4s ease-out both;
 }
-.stagger > *:nth-child(1) { animation-delay: 0.02s; }
-.stagger > *:nth-child(2) { animation-delay: 0.05s; }
-.stagger > *:nth-child(3) { animation-delay: 0.08s; }
-.stagger > *:nth-child(4) { animation-delay: 0.11s; }
-.stagger > *:nth-child(5) { animation-delay: 0.14s; }
-.stagger > *:nth-child(6) { animation-delay: 0.17s; }
-.stagger > *:nth-child(7) { animation-delay: 0.20s; }
-.stagger > *:nth-child(8) { animation-delay: 0.23s; }
+
+.stagger > *:nth-child(1) {
+    animation-delay: 0.02s;
+}
+
+.stagger > *:nth-child(2) {
+    animation-delay: 0.05s;
+}
+
+.stagger > *:nth-child(3) {
+    animation-delay: 0.08s;
+}
+
+.stagger > *:nth-child(4) {
+    animation-delay: 0.11s;
+}
+
+.stagger > *:nth-child(5) {
+    animation-delay: 0.14s;
+}
+
+.stagger > *:nth-child(6) {
+    animation-delay: 0.17s;
+}
+
+.stagger > *:nth-child(7) {
+    animation-delay: 0.20s;
+}
+
+.stagger > *:nth-child(8) {
+    animation-delay: 0.23s;
+}
 
 @keyframes fade-in-up {
-    0% { opacity: 0; transform: translateY(8px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Flotación sutil para íconos hero (login, errores, bloqueo de puerta).
    Usaba la clase .animate-float en 7 vistas pero nunca estuvo definida,
    así que esos íconos quedaban estáticos. */
+
 @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
 }
-.animate-float { animation: float 3.2s ease-in-out infinite; }
+
+.animate-float {
+    animation: float 3.2s ease-in-out infinite;
+}
 
 @media (prefers-reduced-motion: reduce) {
-    .animate-float { animation: none !important; }
+    .animate-float {
+        animation: none !important;
+    }
 }
 
 /* En oscuro una sombra clara casi no se nota sobre el fondo carbón:
    se usa una sombra negra más profunda para que dropdowns, toasts y los
    íconos "hero" mantengan sensación de elevación. */
+
 .dark .shadow-glass-lg {
     box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6);
 }
@@ -245,14 +440,16 @@ body.app-bg {
 /* Marca de avatar / logo del sidebar: degradado con el color de marca.
    .avatar-mark y .sidebar-brand-mark se usaban en topbar/sidebar/mobile-topbar
    pero tampoco estaban definidas — el avatar y el logo se veían sin color. */
+
 .avatar-mark,
 .sidebar-brand-mark {
-    background: linear-gradient(135deg, #5e91ff 0%, #2549ea 100%);
+    background: linear-gradient(135deg, #34d399 0%, #059669 100%);
 }
 
 /* ==================================================================== */
 /*  Layout: Sidebar (Admin / RRHH / Jefe de Área)                       */
 /* ==================================================================== */
+
 .app-shell {
     display: flex;
     min-height: 100vh;
@@ -272,10 +469,17 @@ body.app-bg {
     transition: transform 0.25s ease;
 }
 
-.app-sidebar.is-open { transform: translateX(0); }
+.app-sidebar.is-open {
+    transform: translateX(0);
+}
 
 @media (min-width: 1024px) {
-    .app-sidebar { position: sticky; top: 0; height: 100vh; transform: none; }
+    .app-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        transform: none;
+    }
 }
 
 .sidebar-brand {
@@ -319,12 +523,14 @@ body.app-bg {
 }
 
 .sidebar-link.is-active {
-    background: rgba(59, 108, 246, 0.16);
+    background: rgba(16, 185, 129, 0.16);
     color: #ffffff;
-    box-shadow: inset 3px 0 0 0 #5e91ff;
+    box-shadow: inset 3px 0 0 0 #34d399;
 }
 
-.sidebar-link.is-active .sidebar-icon { color: #93b8ff; }
+.sidebar-link.is-active .sidebar-icon {
+    color: #6ee7b7;
+}
 
 .sidebar-link .sidebar-icon {
     width: 1.25rem;
@@ -379,7 +585,9 @@ body.app-bg {
 }
 
 @media (max-width: 640px) {
-    .app-content { padding: 1rem; }
+    .app-content {
+        padding: 1rem;
+    }
 }
 
 .icon-btn {
@@ -393,12 +601,21 @@ body.app-bg {
     background: transparent;
     transition: background 0.15s ease, color 0.15s ease;
 }
-.icon-btn:hover { background: var(--surface-muted); color: #18181b; }
-.dark .icon-btn:hover { background: rgba(255,255,255,0.06); color: #e4e4e7; }
+
+.icon-btn:hover {
+    background: var(--surface-muted);
+    color: #18181b;
+}
+
+.dark .icon-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e4e4e7;
+}
 
 /* ==================================================================== */
 /*  Layout: Mobile shell (Trabajador / Vigilante)                       */
 /* ==================================================================== */
+
 .mobile-topbar {
     position: sticky;
     top: 0;
@@ -446,10 +663,18 @@ body.app-bg {
     position: relative;
 }
 
-.bottom-nav-item svg { width: 1.375rem; height: 1.375rem; }
+.bottom-nav-item svg {
+    width: 1.375rem;
+    height: 1.375rem;
+}
 
-.bottom-nav-item.is-active { color: #2549ea; }
-.dark .bottom-nav-item.is-active { color: #7c9dfb; }
+.bottom-nav-item.is-active {
+    color: #059669;
+}
+
+.dark .bottom-nav-item.is-active {
+    color: #34d399;
+}
 
 .bottom-nav-item .nav-badge {
     position: absolute;
@@ -469,5 +694,7 @@ body.app-bg {
 }
 
 @media (min-width: 640px) {
-    .mobile-content { padding: 1.5rem; }
+    .mobile-content {
+        padding: 1.5rem;
+    }
 }
