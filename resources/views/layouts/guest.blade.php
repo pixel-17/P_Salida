@@ -28,11 +28,22 @@
         <div class="relative min-h-screen flex flex-col items-center justify-center px-4 py-10">
 
             <a href="/" class="flex flex-col items-center gap-3 animate-fade-in-up">
-                <div class="w-16 h-16 rounded-2xl sidebar-brand-mark flex items-center justify-center shadow-glass-lg animate-float">
-                    <x-application-logo class="w-8 h-8 fill-current text-white" />
+                {{--
+                    A diferencia del resto de la app (que usa
+                    <x-application-logo>, el logo SP), el login lleva el
+                    logo institucional de la Municipalidad Distrital de
+                    Santiago (Cusco) — es la puerta de entrada al sistema,
+                    así que es donde corresponde la identidad oficial. Va
+                    más ancho que alto (no cuadrado) porque el logo incluye
+                    el texto "SANTIAGO" y hay que dejarlo legible.
+                --}}
+                <div class="w-44 rounded-2xl bg-white flex items-center justify-center shadow-glass-lg animate-float p-3">
+                    <img src="{{ asset('images/logo-municipalidad.png') }}"
+                         alt="Municipalidad Distrital de Santiago - Cusco"
+                         class="w-full h-auto object-contain">
                 </div>
-                <span class="text-sm font-bold tracking-wide text-gray-700 uppercase">
-                    {{ config('app.name', 'Papeletas') }}
+                <span class="text-sm font-bold tracking-wide text-gray-700 uppercase text-center leading-tight">
+                    {{ config('app.name', 'Sistema de Papeletas') }}
                 </span>
             </a>
 

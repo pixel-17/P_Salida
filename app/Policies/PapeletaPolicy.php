@@ -52,14 +52,29 @@ class PapeletaPolicy
     /**
      * El trabajador puede ver el código/QR de su propia papeleta para
      * mostrárselo al vigilante en la puerta. No marca nada por sí mismo.
+     *
+     * La fecha autorizada no es negociable (mismo criterio que el
+     * vigilante — ver MarcarSalidaVigilanteAction y
+     * VigilanteController::buscar/puede_salida): si todavía falta para la
+     * fecha_salida, el código NO se muestra, aunque la papeleta ya esté
+     * APROBADO_RRHH. Mostrarlo antes de tiempo no sirve para nada (el
+     * vigilante lo va a rechazar igual) y confunde al trabajador.
+     *
+     * El retorno (EN_CURSO) es la excepción: no se ata a fecha_salida
+     * porque puede cruzar medianoche, igual que puede_retorno en el
+     * vigilante, que tampoco valida fecha para el retorno.
      */
     public function verCodigo(User $user, Papeleta $papeleta): bool
     {
-        return $user->id === $papeleta->trabajador_id
-            && in_array($papeleta->estado->codigo, [
-                EstadoPapeleta::APROBADO_RRHH->value,
-                EstadoPapeleta::EN_CURSO->value,
-            ], true);
+        if ($user->id !== $papeleta->trabajador_id) {
+            return false;
+        }
+
+        return match ($papeleta->estado->codigo) {
+            EstadoPapeleta::APROBADO_RRHH->value => $papeleta->esHoyFechaDeSalida(),
+            EstadoPapeleta::EN_CURSO->value => true,
+            default => false,
+        };
     }
 
     /**
