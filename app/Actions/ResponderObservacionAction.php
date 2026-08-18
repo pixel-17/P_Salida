@@ -39,7 +39,14 @@ class ResponderObservacionAction
             ->latest()
             ->first();
 
-        $estadoDestino = $historialObservacion?->estado_anterior === EstadoPapeleta::APROBADO_JEFE->value
+        // BUG: `estado_anterior` no es ni columna ni relación del modelo
+        // (la columna real es `estado_anterior_id`, y la relación es
+        // `estadoAnterior()` -> Estado). Leer `->estado_anterior`
+        // directamente siempre devolvía null, así que esta comparación
+        // nunca daba true y la papeleta SIEMPRE volvía a SOLICITADO
+        // (jefe), incluso cuando quien observó fue RRHH. Se usa la
+        // relación + su código real.
+        $estadoDestino = $historialObservacion?->estadoAnterior?->codigo === EstadoPapeleta::APROBADO_JEFE->value
             ? EstadoPapeleta::APROBADO_JEFE
             : EstadoPapeleta::SOLICITADO;
 

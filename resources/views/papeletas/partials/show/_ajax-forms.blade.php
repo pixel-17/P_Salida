@@ -50,8 +50,16 @@
             // se ven solos: se muestran como toast.
             const flashStatus = doc.getElementById('flash-status');
             const flashError = doc.getElementById('flash-error');
-            if (flashStatus && window.toastAccion) window.toastAccion(flashStatus.textContent.trim(), 'ok');
-            if (flashError && window.toastAccion) window.toastAccion(flashError.textContent.trim(), 'error');
+            if (flashStatus && window.toastAccion) {
+                window.toastAccion(flashStatus.textContent.trim(), 'ok');
+            }
+            if (flashError && window.toastAccion) {
+                // Puede traer varios <li> (uno por campo con error, p. ej. al
+                // subir un documento que no cumple tipo/tamaño): se listan
+                // separados por "; " en vez de quedar todos pegados.
+                const items = Array.from(flashError.querySelectorAll('li')).map(li => li.textContent.trim());
+                window.toastAccion(items.length ? items.join('; ') : flashError.textContent.trim(), 'error');
+            }
 
             return true;
         }

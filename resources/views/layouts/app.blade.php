@@ -47,6 +47,7 @@
 <body class="app-bg font-sans antialiased">
 
     <x-notification-toast />
+    <x-toast-accion />
 
     @php
         /** @var \App\Models\User $usuario */
@@ -125,7 +126,7 @@
 
                 <main class="app-content">
                     @if (session('status'))
-                        <div class="glass-card border-l-4 !border-l-emerald-400 text-emerald-700 text-sm p-4 mb-4 animate-fade-in-up flex items-center gap-2">
+                        <div id="flash-status" class="glass-card border-l-4 !border-l-emerald-400 text-emerald-700 text-sm p-4 mb-4 animate-fade-in-up flex items-center gap-2">
                             <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
@@ -134,7 +135,7 @@
                     @endif
 
                     @if ($errors->any())
-                        <div class="glass-card border-l-4 !border-l-rose-400 text-rose-700 text-sm p-4 mb-4 animate-fade-in-up">
+                        <div id="flash-error" class="glass-card border-l-4 !border-l-rose-400 text-rose-700 text-sm p-4 mb-4 animate-fade-in-up">
                             <ul class="list-disc pl-4 space-y-0.5">
                                 @foreach ($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -180,7 +181,7 @@
             @endif
 
             @if (session('status'))
-                <div class="glass-card border-l-4 !border-l-emerald-400 text-emerald-700 text-sm p-4 mb-4 animate-fade-in-up flex items-center gap-2">
+                <div id="flash-status" class="glass-card border-l-4 !border-l-emerald-400 text-emerald-700 text-sm p-4 mb-4 animate-fade-in-up flex items-center gap-2">
                     <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
@@ -189,7 +190,7 @@
             @endif
 
             @if ($errors->any())
-                <div class="glass-card border-l-4 !border-l-rose-400 text-rose-700 text-sm p-4 mb-4 animate-fade-in-up">
+                <div id="flash-error" class="glass-card border-l-4 !border-l-rose-400 text-rose-700 text-sm p-4 mb-4 animate-fade-in-up">
                     <ul class="list-disc pl-4 space-y-0.5">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>

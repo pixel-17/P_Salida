@@ -39,6 +39,7 @@
                 @csrf
                 <input type="file" name="archivo" required accept=".pdf,.jpg,.jpeg,.png"
                        class="input-glass text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-brand-100 file:text-brand-700 file:font-medium file:text-xs">
+                <x-input-error :messages="$errors->get('archivo')" />
                 <p class="text-xs text-gray-400">PDF, JPG o PNG, máx. 5MB.</p>
                 <button class="btn-secondary w-full justify-center">
                     {{ $pideSustento ? 'Subir y responder observación' : 'Subir documento' }}
