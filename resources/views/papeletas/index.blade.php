@@ -193,7 +193,7 @@
         @forelse ($papeletas as $papeleta)
             <a href="{{ route('papeletas.show', $papeleta) }}"
                data-no-ajax
-               class="glass-card flex items-center gap-2 p-4 sm:p-4 py-4.5 border-l-4 active:scale-[0.99] transition-transform"
+               class="glass-card flex items-center gap-2 p-4 border-l-4 active:scale-[0.99] transition-transform"
                style="border-left-color: {{ $papeleta->estado->color }}">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">

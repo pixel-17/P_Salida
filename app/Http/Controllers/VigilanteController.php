@@ -67,7 +67,14 @@ class VigilanteController extends Controller
                 'trabajador' => $p->trabajador->name,
                 'dni' => $p->trabajador->dni,
                 'estado' => $p->estado->codigo,
-                'puede_salida' => $p->estado->codigo === EstadoPapeleta::APROBADO_RRHH->value,
+                'fecha_salida' => $p->fecha_salida->format('d/m/Y'),
+                'dias_para_salida' => $p->diasParaSalida(),
+                // No basta con estar en APROBADO_RRHH: la fecha autorizada
+                // tiene que ser exactamente hoy (ver
+                // Papeleta::esHoyFechaDeSalida / MarcarSalidaVigilanteAction,
+                // que es la barrera real — esto es solo para no ofrecer un
+                // botón que el servidor va a rechazar igual).
+                'puede_salida' => $p->estado->codigo === EstadoPapeleta::APROBADO_RRHH->value && $p->esHoyFechaDeSalida(),
                 'puede_retorno' => $p->estado->codigo === EstadoPapeleta::EN_CURSO->value,
             ]);
 

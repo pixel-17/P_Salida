@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Notifications\MarcacionSalidaNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -29,6 +30,23 @@ class MarcarSalidaVigilanteAction
         if ($horaLimite && now()->greaterThan(today()->setTimeFromTimeString($horaLimite))) {
             throw ValidationException::withMessages([
                 'marcacion' => "Ya pasó el horario límite para registrar salidas ({$horaLimite}).",
+            ]);
+        }
+
+        // La fecha autorizada no es negociable: la hora programada es solo
+        // un estimado (el trabajador puede salir antes o después dentro del
+        // mismo día), pero el DÍA sí es fijo. PapeletaPolicy::marcarComoVigilante
+        // es compartida con el retorno (que no debe llevar esta restricción)
+        // y no valida fecha, así que esta es la barrera real y única contra
+        // marcar salida en un día distinto al autorizado.
+        if (! $papeleta->esHoyFechaDeSalida()) {
+            $dias = $papeleta->diasParaSalida();
+            $fecha = $papeleta->fecha_salida->format('d/m/Y');
+
+            throw ValidationException::withMessages([
+                'marcacion' => $dias > 0
+                    ? "Esta papeleta es para el {$fecha} — faltan {$dias} ".Str::plural('día', $dias).". No se puede marcar salida antes de la fecha autorizada."
+                    : "La fecha autorizada para esta papeleta ({$fecha}) ya pasó.",
             ]);
         }
 

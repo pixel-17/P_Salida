@@ -229,7 +229,7 @@
             <a href="{{ route('papeletas.index') }}" class="btn-secondary w-full sm:w-auto justify-center">Cancelar</a>
         </div>
 
-        <div class="sm:hidden fixed bottom-16 inset-x-0 z-30 p-3 glass !rounded-none !border-x-0 !border-b-0"
+        <div class="sm:hidden fixed bottom-16 inset-x-0 z-30 p-3 mobile-action-bar"
              style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));">
             <div class="flex gap-2 max-w-5xl mx-auto">
                 <a href="{{ route('papeletas.index') }}" class="btn-secondary !px-4">Cancelar</a>

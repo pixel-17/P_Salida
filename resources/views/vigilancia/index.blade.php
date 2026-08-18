@@ -271,6 +271,22 @@
                             >
                                 Fuera de horario ({{ $horaLimiteRegistro }})
                             </p>
+                            {{-- Papeleta aprobada pero para una fecha distinta a hoy: ni
+                            futura ni vencida se puede marcar acá, se informa en vez de
+                            ofrecer un botón que el servidor va a rechazar igual. --}}
+                            <p
+                                x-show="p.estado === 'APROBADO_RRHH' && !p.puede_salida"
+                                x-cloak
+                                class="flex-1 text-center text-xs font-medium py-3 rounded-lg"
+                                :class="p.dias_para_salida > 0 ? 'text-amber-700 bg-amber-50' : 'text-rose-600 bg-rose-50'"
+                            >
+                                <template x-if="p.dias_para_salida > 0">
+                                    <span>Válida el <span x-text="p.fecha_salida"></span> — faltan <span x-text="p.dias_para_salida"></span> día<span x-show="p.dias_para_salida > 1">s</span></span>
+                                </template>
+                                <template x-if="p.dias_para_salida <= 0">
+                                    <span>Fecha autorizada (<span x-text="p.fecha_salida"></span>) ya venció</span>
+                                </template>
+                            </p>
                         </div>
                     </div>
                 </template>

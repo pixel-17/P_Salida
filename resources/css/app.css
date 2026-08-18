@@ -616,6 +616,13 @@ body.app-bg {
 /*  Layout: Mobile shell (Trabajador / Vigilante)                       */
 /* ==================================================================== */
 
+.mobile-action-bar {
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border-top: 1px solid var(--border-soft);
+}
+
 .mobile-topbar {
     position: sticky;
     top: 0;
@@ -625,7 +632,9 @@ body.app-bg {
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.875rem 1rem;
-    background: var(--surface);
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
     border-bottom: 1px solid var(--border-soft);
 }
 
@@ -644,7 +653,9 @@ body.app-bg {
     right: 0;
     z-index: 40;
     display: flex;
-    background: var(--surface);
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
     border-top: 1px solid var(--border-soft);
     padding-bottom: env(safe-area-inset-bottom, 0);
 }

@@ -94,6 +94,31 @@ class Papeleta extends Model
         return $this->estado->codigo === $codigo->value;
     }
 
+    /**
+     * Días de diferencia entre hoy y la fecha_salida autorizada.
+     * Positivo: la salida es en el futuro (aún faltan N días).
+     * Cero: la salida es hoy — único día válido para marcar salida.
+     * Negativo: la fecha ya pasó (caso raro, cubierto por
+     * papeletas:cancelar-no-presentadas a las 23:55, pero se calcula
+     * igual por si se consulta antes de que corra ese barrido).
+     */
+    public function diasParaSalida(): int
+    {
+        return (int) now()->startOfDay()->diffInDays($this->fecha_salida->copy()->startOfDay(), false);
+    }
+
+    /**
+     * Único día en que corresponde marcar salida: exactamente el día
+     * solicitado. La hora programada es solo una referencia/estimado —el
+     * trabajador puede presentarse antes o después dentro de ese mismo
+     * día— pero la FECHA no es negociable: no se marca salida ni un día
+     * antes ni un día después de lo autorizado.
+     */
+    public function esHoyFechaDeSalida(): bool
+    {
+        return $this->diasParaSalida() === 0;
+    }
+
     public function marcacion(TipoMarcacion $tipo): ?Marcacion
     {
         return $this->marcaciones->firstWhere('tipo', $tipo->value);

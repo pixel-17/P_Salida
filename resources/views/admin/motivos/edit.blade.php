@@ -15,12 +15,12 @@
         </div>
         <div class="flex items-center gap-2">
             <input type="hidden" name="requiere_documento" value="0">
-            <input type="checkbox" name="requiere_documento" value="1" id="requiere_documento" class="rounded" @checked(old('requiere_documento', $motivo->requiere_documento))>
+            <input type="checkbox" name="requiere_documento" value="1" id="requiere_documento" class="rounded border-gray-300 text-brand-600 focus:ring-brand-400" @checked(old('requiere_documento', $motivo->requiere_documento))>
             <label for="requiere_documento" class="text-sm text-gray-700">Requiere documento sustentatorio</label>
         </div>
         <div class="flex items-center gap-2">
             <input type="hidden" name="goce_haber" value="0">
-            <input type="checkbox" name="goce_haber" value="1" id="goce_haber" class="rounded" @checked(old('goce_haber', $motivo->goce_haber))>
+            <input type="checkbox" name="goce_haber" value="1" id="goce_haber" class="rounded border-gray-300 text-brand-600 focus:ring-brand-400" @checked(old('goce_haber', $motivo->goce_haber))>
             <label for="goce_haber" class="text-sm text-gray-700">Con goce de haber</label>
         </div>
         <div class="flex items-center gap-2">

@@ -51,6 +51,28 @@ class MarcarSalidaVigilanteActionTest extends PapeletaActionTestCase
         (new MarcarSalidaVigilanteAction)->execute($papeleta, $this->vigilante);
     }
 
+    public function test_no_se_puede_marcar_salida_antes_de_la_fecha_autorizada(): void
+    {
+        $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
+            'fecha_salida' => now()->addDays(3)->toDateString(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        (new MarcarSalidaVigilanteAction)->execute($papeleta, $this->vigilante);
+    }
+
+    public function test_no_se_puede_marcar_salida_despues_de_la_fecha_autorizada(): void
+    {
+        $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
+            'fecha_salida' => now()->subDay()->toDateString(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        (new MarcarSalidaVigilanteAction)->execute($papeleta, $this->vigilante);
+    }
+
     /**
      * Simula la carrera real: dos "workers" que leyeron la papeleta ANTES de
      * que cualquiera de los dos marcara salida (dos instancias de Eloquent
