@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Papeleta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -34,6 +35,16 @@ class ReporteController extends Controller
     private const POR_PAGINA_DETALLE = 20;
 
     private const TOP_CUADRO_TRABAJADORES = 50;
+
+    /**
+     * Mismo criterio que PapeletaController::MAX_FILAS_EXPORTAR: sin este
+     * tope, papeletasDelRango() carga con ->get() TODO lo que caiga en el
+     * rango pedido para calcular los rankings en PHP — sin límite, un
+     * rango de fechas amplio (ej. "todo el año") puede significar decenas
+     * de miles de filas en memoria en una sola request. Se corta acá,
+     * antes de cargar nada, y se le pide al usuario acotar el rango.
+     */
+    private const MAX_FILAS_REPORTE = 10000;
 
     public function index(Request $request): View
     {
@@ -202,6 +213,15 @@ class ReporteController extends Controller
         $esSoloJefe = $usuario->esJefe() && ! $usuario->esRrhh() && ! $usuario->esAdmin();
         if ($esSoloJefe) {
             $base->deSuEquipo($usuario->id);
+        }
+
+        $total = (clone $base)->count();
+
+        if ($total > self::MAX_FILAS_REPORTE) {
+            throw ValidationException::withMessages([
+                'reporte' => 'Hay '.number_format($total)." papeletas en ese rango; el máximo para calcular el reporte es "
+                    .number_format(self::MAX_FILAS_REPORTE).'. Acota el rango de fechas o el área e inténtalo de nuevo.',
+            ]);
         }
 
         $papeletas = (clone $base)

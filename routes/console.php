@@ -24,3 +24,11 @@ Schedule::command('papeletas:alertar-salida-no-marcada')
 Schedule::command('papeletas:cancelar-no-presentadas')
     ->dailyAt('23:55')
     ->withoutOverlapping();
+
+// Mantenimiento de tablas que solo crecen (notificaciones ya leídas,
+// suscripciones push muertas). No toca historial_papeletas ni audit_logs:
+// esas son el registro de auditoría real y se conservan indefinidamente.
+// Semanal y de madrugada porque no es una operación urgente.
+Schedule::command('papeletas:podar-datos-antiguos')
+    ->weeklyOn(1, '03:00')
+    ->withoutOverlapping();
