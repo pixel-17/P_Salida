@@ -29,8 +29,8 @@
         @csrf
 
         <div>
-            <x-input-label value="Motivo" />
-            <select name="motivo_id" required class="input-glass">
+            <x-input-label for="motivo_id" value="Motivo" />
+            <select id="motivo_id" name="motivo_id" required class="input-glass">
                 <option value="">Selecciona un motivo</option>
                 @foreach(\App\Models\Motivo::activos()->orderBy('nombre')->get() as $motivo)
                     <option value="{{ $motivo->id }}" @selected(old('motivo_id') == $motivo->id)>
@@ -42,15 +42,16 @@
         </div>
 
         <div>
-            <x-input-label value="Destino" />
-            <input type="text" name="destino" required value="{{ old('destino') }}"
+            <x-input-label for="destino" value="Destino" />
+            <input type="text" id="destino" name="destino" required value="{{ old('destino') }}"
                    class="input-glass" placeholder="Ej: Municipalidad Provincial">
             <x-input-error :messages="$errors->get('destino')" />
         </div>
 
+
         <div>
-            <x-input-label value="Detalle (opcional)" />
-            <textarea name="motivo_detalle" rows="3" class="input-glass">{{ old('motivo_detalle') }}</textarea>
+            <x-input-label for="motivo_detalle" value="Detalle (opcional)" />
+            <textarea id="motivo_detalle" name="motivo_detalle" rows="3" class="input-glass">{{ old('motivo_detalle') }}</textarea>
             <x-input-error :messages="$errors->get('motivo_detalle')" />
         </div>
 
@@ -63,7 +64,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-                <x-input-label value="Fecha" />
+                <x-input-label for="fecha_salida" value="Fecha" />
                 <input type="date" name="fecha_salida" id="fecha_salida" required
                        min="{{ now()->toDateString() }}" value="{{ old('fecha_salida') }}"
                        class="input-glass">
@@ -71,6 +72,9 @@
             </div>
 
             <div>
+                {{-- Sin "for": el selector de hora es un widget compuesto
+                (varios <select>/input, no un único campo), cada sub-control
+                ya lleva su propio aria-label — ver time-picker.blade.php. --}}
                 <x-input-label value="Hora salida" />
                 @include('papeletas.partials.time-picker', [
                     'name' => 'hora_salida_programada',
@@ -92,6 +96,7 @@
                 ])
                 <x-input-error :messages="$errors->get('hora_retorno_programada')" />
             </div>
+
         </div>
 
         <script>

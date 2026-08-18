@@ -16,7 +16,7 @@
 
     {{-- Trabajadores --}}
     <div class="glass-card p-4 flex items-center gap-3">
-        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-lg shrink-0 shadow-glass">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-lg shrink-0 shadow-glass">
             🧑‍💼
         </div>
         <div class="min-w-0">

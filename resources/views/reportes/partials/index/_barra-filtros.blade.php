@@ -50,10 +50,10 @@
 
         <span @class([
             'inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full self-start lg:self-auto border',
-            'bg-purple-50 text-purple-700 border-purple-100' => $esSoloJefe,
+            'bg-brand-50 text-brand-700 border-brand-100' => $esSoloJefe,
             'bg-brand-50 text-brand-700 border-brand-100' => ! $esSoloJefe,
         ])>
-            <span class="w-1.5 h-1.5 rounded-full {{ $esSoloJefe ? 'bg-purple-500' : 'bg-brand-500' }}"></span>
+            <span class="w-1.5 h-1.5 rounded-full {{ $esSoloJefe ? 'bg-brand-500' : 'bg-brand-500' }}"></span>
             {{ $esSoloJefe ? 'Mi equipo' : 'Todas las áreas' }}
         </span>
     </div>

@@ -26,7 +26,7 @@
                 <div></div>
                 <a href="{{ route('profile.edit') }}"
                    class="flex flex-col items-center justify-center gap-0.5 {{ request()->routeIs('profile.*') ? 'text-brand-600' : 'text-gray-400' }}">
-                    <span class="w-6 h-6 rounded-full bg-gradient-to-br from-brand-400 to-purple-400 flex items-center justify-center text-white text-[10px] font-bold">
+                    <span class="w-6 h-6 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-[10px] font-bold">
                         {{ strtoupper(substr($usuario->name, 0, 1)) }}
                     </span>
                     <span class="text-[10px] font-semibold">Perfil</span>
@@ -59,7 +59,7 @@
 
                 <a href="{{ route('profile.edit') }}"
                    class="flex flex-col items-center justify-center gap-0.5 {{ request()->routeIs('profile.*') ? 'text-brand-600' : 'text-gray-400' }}">
-                    <span class="w-6 h-6 rounded-full bg-gradient-to-br from-brand-400 to-purple-400 flex items-center justify-center text-white text-[10px] font-bold">
+                    <span class="w-6 h-6 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-[10px] font-bold">
                         {{ strtoupper(substr($usuario->name, 0, 1)) }}
                     </span>
                     <span class="text-[10px] font-semibold">Perfil</span>

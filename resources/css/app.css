@@ -17,7 +17,7 @@
     --ink-900: #18181b;
     --sidebar-bg: #18181b;
     --sidebar-bg-active: #26262b;
-    accent-color: #10b981;
+    accent-color: #0ea5e9;
 }
 
 html {
@@ -52,7 +52,7 @@ body.app-bg {
     background:
         radial-gradient(
             60rem 32rem at 50% -10%,
-            rgba(16, 185, 129, 0.10),
+            rgba(14, 165, 233, 0.10),
             transparent 65%
         ),
         var(--surface-muted);
@@ -62,7 +62,7 @@ body.app-bg {
     background:
         radial-gradient(
             60rem 32rem at 50% -10%,
-            rgba(16, 185, 129, 0.14),
+            rgba(14, 165, 233, 0.14),
             transparent 65%
         ),
         var(--surface-muted);
@@ -152,7 +152,7 @@ body.app-bg {
 }
 
 .dark .bg-brand-50\/50 {
-    background-color: rgba(5, 150, 105, 0.12);
+    background-color: rgba(2, 132, 199, 0.12);
 }
 
 /* Texto: ajuste automático en modo oscuro sin tocar cada vista.
@@ -244,11 +244,11 @@ body.app-bg {
 
 .btn-primary {
     @apply btn-glass text-white;
-    background: #059669;
+    background: #0284c7;
 }
 
 .btn-primary:hover {
-    background: #047857;
+    background: #0369a1;
 }
 
 .btn-primary:active {
@@ -256,11 +256,11 @@ body.app-bg {
 }
 
 .dark .btn-primary {
-    background: #10b981;
+    background: #0ea5e9;
 }
 
 .dark .btn-primary:hover {
-    background: #34d399;
+    background: #38bdf8;
 }
 
 .btn-secondary {
@@ -309,8 +309,8 @@ body.app-bg {
 }
 
 .input-glass:focus {
-    border-color: #10b981;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
 }
 
 .dark .input-glass {
@@ -323,8 +323,8 @@ body.app-bg {
 }
 
 .dark .input-glass:focus {
-    border-color: #34d399;
-    box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18);
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
 }
 
 /* Scrollbar sutil */
@@ -443,7 +443,7 @@ body.app-bg {
 
 .avatar-mark,
 .sidebar-brand-mark {
-    background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+    background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
 }
 
 /* ==================================================================== */
@@ -523,13 +523,13 @@ body.app-bg {
 }
 
 .sidebar-link.is-active {
-    background: rgba(16, 185, 129, 0.16);
+    background: rgba(14, 165, 233, 0.16);
     color: #ffffff;
-    box-shadow: inset 3px 0 0 0 #34d399;
+    box-shadow: inset 3px 0 0 0 #38bdf8;
 }
 
 .sidebar-link.is-active .sidebar-icon {
-    color: #6ee7b7;
+    color: #7dd3fc;
 }
 
 .sidebar-link .sidebar-icon {
@@ -680,11 +680,11 @@ body.app-bg {
 }
 
 .bottom-nav-item.is-active {
-    color: #059669;
+    color: #0284c7;
 }
 
 .dark .bottom-nav-item.is-active {
-    color: #34d399;
+    color: #38bdf8;
 }
 
 .bottom-nav-item .nav-badge {

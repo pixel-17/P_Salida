@@ -9,7 +9,7 @@
 
     {{-- PWA: instalable en el celular/escritorio --}}
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#2549ea">
+    <meta name="theme-color" content="#0284c7">
     <link rel="icon" href="/icons/icon-192.png">
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">

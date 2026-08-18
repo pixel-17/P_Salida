@@ -24,7 +24,7 @@
         @if($rankingAreas->isNotEmpty())
             @php $topArea = $rankingAreas->first(); @endphp
             <p class="text-lg font-extrabold text-gray-800">{{ $topArea['nombre'] }}</p>
-            <p class="text-sm font-bold text-purple-700 mt-2">{{ $topArea['total'] }} salidas</p>
+            <p class="text-sm font-bold text-brand-700 mt-2">{{ $topArea['total'] }} salidas</p>
         @else
             <p class="text-sm text-gray-400">Sin datos en este rango.</p>
         @endif

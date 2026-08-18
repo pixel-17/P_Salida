@@ -27,7 +27,7 @@
     <body class="font-sans antialiased app-bg auth-bg">
         <div class="relative min-h-screen flex flex-col items-center justify-center px-4 py-10">
 
-            <a href="/" class="flex flex-col items-center gap-3 animate-fade-in-up">
+            <div class="flex flex-col items-center gap-3 animate-fade-in-up">
                 {{--
                     A diferencia del resto de la app (que usa
                     <x-application-logo>, el logo SP), el login lleva el
@@ -36,8 +36,11 @@
                     así que es donde corresponde la identidad oficial. Va
                     más ancho que alto (no cuadrado) porque el logo incluye
                     el texto "SANTIAGO" y hay que dejarlo legible.
+
+                    Sin enlace: no debe redirigir a ningún lado, solo es
+                    identidad visual de la pantalla de acceso.
                 --}}
-                <div class="w-44 rounded-2xl bg-white flex items-center justify-center shadow-glass-lg animate-float p-3">
+                <div class="w-28 rounded-2xl bg-white flex items-center justify-center shadow-glass-lg animate-float p-3">
                     <img src="{{ asset('images/logo-municipalidad.png') }}"
                          alt="Municipalidad Distrital de Santiago - Cusco"
                          class="w-full h-auto object-contain">
@@ -45,7 +48,7 @@
                 <span class="text-sm font-bold tracking-wide text-gray-700 uppercase text-center leading-tight">
                     {{ config('app.name', 'Sistema de Papeletas') }}
                 </span>
-            </a>
+            </div>
 
             <div class="w-full sm:max-w-md mt-7 px-6 py-8 sm:px-9 sm:py-9 glass-panel !rounded-3xl animate-scale-in">
                 {{ $slot }}
