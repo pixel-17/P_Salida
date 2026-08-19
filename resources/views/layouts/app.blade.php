@@ -73,7 +73,6 @@
                         'label' => 'Catálogos',
                         'items' => [
                             ['label' => 'Usuarios', 'route' => route('users.index'), 'active' => 'users.*', 'icon' => 'users'],
-                            ['label' => 'Trabajadores', 'route' => route('equipo.index'), 'active' => 'equipo.*', 'icon' => 'user-circle'],
                             ['label' => 'Áreas', 'route' => route('areas.index'), 'active' => 'areas.*', 'icon' => 'building'],
                             ['label' => 'Cargos', 'route' => route('cargos.index'), 'active' => 'cargos.*', 'icon' => 'briefcase'],
                             ['label' => 'Sedes', 'route' => route('sedes.index'), 'active' => 'sedes.*', 'icon' => 'map-pin'],

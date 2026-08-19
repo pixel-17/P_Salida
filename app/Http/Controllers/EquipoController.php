@@ -140,13 +140,14 @@ class EquipoController extends Controller
 
     public function destroy(User $trabajador): RedirectResponse
     {
-        $this->authorize('eliminarTrabajador', $trabajador);
+        $this->authorize('activarTrabajador', $trabajador);
 
-        // Mismo criterio que UserController: baja lógica, nunca hard-delete
-        // (rompería el historial de papeletas de ese trabajador).
-        $trabajador->update(['estado' => false]);
-        $trabajador->delete();
+        // Toggle real: el Jefe no tiene editar ni eliminar (ver
+        // UserPolicy), así que esta es su única forma de reactivar a
+        // alguien que desactivó por error, sin pasar por un formulario
+        // de edición al que no tiene acceso.
+        $trabajador->update(['estado' => ! $trabajador->estado]);
 
-        return back()->with('status', 'Trabajador desactivado.');
+        return back()->with('status', $trabajador->estado ? 'Trabajador activado.' : 'Trabajador desactivado.');
     }
 }

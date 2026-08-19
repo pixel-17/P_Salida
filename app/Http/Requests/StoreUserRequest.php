@@ -53,6 +53,10 @@ class StoreUserRequest extends FormRequest
             if ($this->input('rol') === RolUsuario::VIGILANTE->value && ! $this->filled('sede_id')) {
                 $validator->errors()->add('sede_id', 'Un vigilante necesita una sede asignada.');
             }
+
+            if ($this->input('rol') === RolUsuario::TRABAJADOR->value && ! $this->filled('jefe_id')) {
+                $validator->errors()->add('jefe_id', 'Un trabajador necesita un jefe asignado (su sede se deriva de él).');
+            }
         });
     }
 }

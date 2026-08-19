@@ -86,8 +86,38 @@
                             @if($user->id !== auth()->id())
                                 <form method="POST" action="{{ route('users.destroy', $user) }}" class="inline">
                                     @csrf @method('DELETE')
-                                    <button class="text-rose-500 hover:text-rose-700 font-medium" onclick="return confirm('¿Desactivar este usuario?')">Desactivar</button>
+                                    <button class="text-amber-600 hover:text-amber-800 font-medium" onclick="return confirm('¿Desactivar este usuario?')">Desactivar</button>
                                 </form>
+
+                                <button
+                                    x-data=""
+                                    x-on:click.prevent="$dispatch('open-modal', 'confirm-eliminar-user-{{ $user->id }}')"
+                                    class="text-rose-500 hover:text-rose-700 font-medium"
+                                >Eliminar</button>
+
+                                <x-modal name="confirm-eliminar-user-{{ $user->id }}" :show="$errors->getBag('eliminarUsuario'.$user->id)->isNotEmpty()" focusable>
+                                    <form method="POST" action="{{ route('users.eliminar', $user) }}" class="p-6">
+                                        @csrf @method('DELETE')
+
+                                        <h2 class="text-lg font-bold text-gray-800">
+                                            ¿Estás seguro de borrar a {{ $user->name }}?
+                                        </h2>
+                                        <p class="mt-1 text-sm text-gray-500">
+                                            Esta acción no se puede deshacer y su email/DNI ya no se podrán reutilizar. Ingresa tu contraseña para confirmar.
+                                        </p>
+
+                                        <div class="mt-6">
+                                            <x-input-label for="password-user-{{ $user->id }}" value="Contraseña" class="sr-only" />
+                                            <x-text-input id="password-user-{{ $user->id }}" name="password" type="password" class="mt-1 block w-3/4" placeholder="Tu contraseña" />
+                                            <x-input-error :messages="$errors->getBag('eliminarUsuario'.$user->id)->get('password')" class="mt-2" />
+                                        </div>
+
+                                        <div class="mt-6 flex justify-end gap-3">
+                                            <x-secondary-button x-on:click="$dispatch('close')">Cancelar</x-secondary-button>
+                                            <x-danger-button>Eliminar</x-danger-button>
+                                        </div>
+                                    </form>
+                                </x-modal>
                             @endif
                         </td>
                     </tr>

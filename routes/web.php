@@ -131,14 +131,13 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('sedes', SedeController::class)->except(['show']);
         Route::resource('motivos', MotivoController::class)->except(['show']);
         Route::resource('users', UserController::class)->except(['show']);
+        Route::delete('/users/{user}/eliminar', [UserController::class, 'eliminar'])->name('users.eliminar');
     });
 
-    // ---------- Mi equipo: JEFE (crear + ver los suyos) y ADMINISTRADOR
-    // (CRUD completo de cualquier trabajador). La autorización fina
-    // (quién puede editar/eliminar) vive en UserPolicy, no acá — este
-    // middleware solo filtra "ni siquiera intentes entrar" para el resto
-    // de roles (RRHH, Vigilante, Trabajador). ----------
-    Route::middleware(['role:JEFE|ADMINISTRADOR', 'throttle:60,1'])
+    // ---------- Mi equipo: exclusivo del JEFE (crear + ver los suyos).
+    // El administrador ya no entra por acá; gestiona trabajadores desde
+    // /users como cualquier otro rol. ----------
+    Route::middleware(['role:JEFE', 'throttle:60,1'])
         ->prefix('equipo')->name('equipo.')->group(function () {
             Route::get('/', [EquipoController::class, 'index'])->name('index');
             Route::get('/crear', [EquipoController::class, 'create'])->name('create');

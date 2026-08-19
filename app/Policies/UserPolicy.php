@@ -35,12 +35,23 @@ class UserPolicy
 
     /**
      * Editar/eliminar trabajadores es exclusivo del administrador. El jefe
-     * pidió expresamente "solo crear, no eliminar ni editar" — se deja
-     * así de explícito para que quede claro que no es un olvido.
+     * pidió expresamente "solo crear, activar y desactivar — no editar ni
+     * eliminar" — se deja así de explícito para que quede claro que no es
+     * un olvido.
      */
     public function editarTrabajador(User $user, User $trabajador): bool
     {
         return $user->esAdmin();
+    }
+
+    /**
+     * Activar/desactivar (toggle de estado) SÍ lo puede hacer el jefe,
+     * pero solo sobre sus propios trabajadores; el admin, sobre cualquiera.
+     * Distinto de editarTrabajador/eliminarTrabajador a propósito.
+     */
+    public function activarTrabajador(User $user, User $trabajador): bool
+    {
+        return $user->esAdmin() || $user->id === $trabajador->jefe_id;
     }
 
     public function eliminarTrabajador(User $user, User $trabajador): bool

@@ -52,6 +52,12 @@ class UserController extends Controller
         $rol = $data['rol'];
         unset($data['rol']);
 
+        // Igual que en EquipoController: la sede de un trabajador SIEMPRE
+        // es la de su jefe, nunca la que venga (o no) del formulario.
+        if ($rol === RolUsuario::TRABAJADOR->value) {
+            $data['sede_id'] = User::find($data['jefe_id'])?->sede_id;
+        }
+
         // Contraseña inicial = DNI, igual que en EquipoController: el
         // admin no elige contraseñas ajenas para ningún rol. Se fuerza el
         // cambio en el primer login (must_change_password).
@@ -75,6 +81,12 @@ class UserController extends Controller
         $rol = $data['rol'];
         unset($data['rol']);
 
+        // Misma regla que en store(): si el (nuevo) rol es TRABAJADOR, la
+        // sede se recalcula siempre a partir del jefe elegido.
+        if ($rol === RolUsuario::TRABAJADOR->value) {
+            $data['sede_id'] = User::find($data['jefe_id'])?->sede_id;
+        }
+
         if (filled($data['password'] ?? null)) {
             $data['password'] = Hash::make($data['password']);
             $data['must_change_password'] = true;
@@ -90,11 +102,30 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        // Soft-delete: nunca hard-delete, rompe el historial de papeletas.
+        // Puro toggle: NO borra (ni soft-delete). Reactivar se hace desde
+        // el checkbox "Activo" en el formulario de edición. Así el email
+        // y el DNI de alguien desactivado se pueden seguir viendo/usando
+        // para ese mismo registro sin quedar bloqueados por un delete().
+        $user->update(['estado' => false]);
+
+        return back()->with('status', 'Usuario desactivado.');
+    }
+
+    /**
+     * Borrado real (soft-delete): a diferencia de destroy(), esto SÍ deja
+     * el email/dni bloqueados para siempre (por el unique index), así que
+     * requiere confirmación explícita + contraseña del propio admin.
+     */
+    public function eliminar(Request $request, User $user): RedirectResponse
+    {
+        $request->validateWithBag('eliminarUsuario'.$user->id, [
+            'password' => ['required', 'current_password'],
+        ]);
+
         $user->update(['estado' => false]);
         $user->delete();
 
-        return back()->with('status', 'Usuario desactivado.');
+        return back()->with('status', 'Usuario eliminado.');
     }
 
     private function datosFormulario(?User $excluir = null): array
@@ -104,6 +135,7 @@ class UserController extends Controller
             'cargos' => Cargo::activos()->orderBy('nombre')->get(),
             'sedes' => Sede::where('estado', true)->orderBy('nombre')->get(),
             'jefes' => User::role(RolUsuario::JEFE->value)
+                ->with('sede')
                 ->when($excluir, fn ($q) => $q->whereKeyNot($excluir->id))
                 ->orderBy('name')->get(),
         ];

@@ -47,9 +47,7 @@
                         <th class="p-3 hidden sm:table-cell">Jefe</th>
                     @endif
                     <th class="p-3">Estado</th>
-                    @if($esAdmin)
-                        <th class="p-3"></th>
-                    @endif
+                    <th class="p-3"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-white/50">
@@ -66,19 +64,19 @@
                                 {{ $trabajador->estado ? 'Activo' : 'Inactivo' }}
                             </span>
                         </td>
-                        @if($esAdmin)
-                            <td class="p-3 text-right space-x-3 whitespace-nowrap">
-                                <a href="{{ route('equipo.edit', $trabajador) }}" class="text-brand-600 hover:text-brand-800 font-semibold">Editar</a>
-                                <form method="POST" action="{{ route('equipo.destroy', $trabajador) }}" class="inline">
-                                    @csrf @method('DELETE')
-                                    <button class="text-rose-500 hover:text-rose-700 font-medium" onclick="return confirm('¿Desactivar este trabajador?')">Desactivar</button>
-                                </form>
-                            </td>
-                        @endif
+                        <td class="p-3 text-right whitespace-nowrap">
+                            <form method="POST" action="{{ route('equipo.destroy', $trabajador) }}" class="inline">
+                                @csrf @method('DELETE')
+                                <button
+                                    class="font-medium {{ $trabajador->estado ? 'text-amber-600 hover:text-amber-800' : 'text-emerald-600 hover:text-emerald-800' }}"
+                                    onclick="return confirm('{{ $trabajador->estado ? '¿Desactivar' : '¿Activar' }} a {{ $trabajador->name }}?')"
+                                >{{ $trabajador->estado ? 'Desactivar' : 'Activar' }}</button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $esAdmin ? 6 : 4 }}" class="p-10 text-center text-gray-400 text-sm">
+                        <td colspan="{{ $esAdmin ? 7 : 5 }}" class="p-10 text-center text-gray-400 text-sm">
                             @if($esAdmin)
                                 No hay trabajadores que coincidan con el filtro.
                             @else

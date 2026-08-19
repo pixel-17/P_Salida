@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
+use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -42,18 +43,28 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $credenciales = $this->only('email', 'password') + ['estado' => true];
-
-        if (! Auth::attempt($credenciales, $this->boolean('remember'))) {
+        if (! Auth::validate($this->only('email', 'password'))) {
             RateLimiter::hit($this->throttleKey());
 
-            // No se distingue "credenciales inválidas" de "usuario inactivo":
-            // dar el mismo mensaje evita filtrar si el email existe pero
-            // está desactivado.
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
         }
+
+        // Credenciales correctas, pero la cuenta está desactivada. Pedido
+        // expreso: acá SÍ se avisa explícitamente (a diferencia de antes,
+        // que daba el mismo mensaje genérico para no filtrar si el email
+        // existía) porque el trabajador necesita saber que debe contactar
+        // a su jefe/admin, no pensar que escribió mal su contraseña.
+        $user = User::where('email', $this->string('email'))->first();
+
+        if (! $user->estado) {
+            throw ValidationException::withMessages([
+                'email' => 'Tu cuenta está suspendida. Comunícate con tu administrador o tu jefe de área.',
+            ]);
+        }
+
+        Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
     }
