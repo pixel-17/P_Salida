@@ -39,5 +39,5 @@ return [
     | no en las Actions.
     |
     */
-    'hora_limite_registro_garita' => '17:30',
+    'hora_limite_registro_garita' => '17:00',
 ];

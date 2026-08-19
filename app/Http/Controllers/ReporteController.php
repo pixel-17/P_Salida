@@ -287,14 +287,13 @@ class ReporteController extends Controller
 
                 $segundosFuera = $grupo->sum(function (Papeleta $papeleta) {
                     $salida = $papeleta->marcaciones->firstWhere('tipo', 'SALIDA');
+                    $fin = $papeleta->finEfectivoParaHoras();
 
-                    if (! $salida) {
+                    if (! $salida || ! $fin) {
                         return 0;
                     }
 
-                    $retorno = $papeleta->marcaciones->firstWhere('tipo', 'RETORNO');
-
-                    return $salida->created_at->diffInSeconds($retorno?->created_at ?? now());
+                    return $salida->created_at->diffInSeconds($fin);
                 });
 
                 $total = $grupo->count();
@@ -336,10 +335,13 @@ class ReporteController extends Controller
     /**
      * Trabajadores con más horas fuera acumuladas en el rango: para cada
      * papeleta con marcación de SALIDA, se cuenta el tiempo transcurrido
-     * hasta la marcación de RETORNO (si ya volvió) o hasta ahora (si sigue
-     * afuera — EN_CURSO/VENCIDA). Esto refleja el tiempo real fuera de la
-     * empresa, no solo lo "cerrado" (a diferencia de horasPorMotivo, que
-     * solo cuenta salidas ya finalizadas).
+     * hasta la marcación de RETORNO (si ya volvió) o hasta el fin efectivo
+     * calculado por Papeleta::finEfectivoParaHoras() (si sigue afuera —
+     * EN_CURSO cuenta en tiempo real hasta ahora; VENCIDA sin retorno topa
+     * en el corte de garita del día, no crece para siempre). Esto refleja
+     * el tiempo real fuera de la empresa sin que una papeleta vieja sin
+     * retorno infle el ranking con cientos de horas — a diferencia de
+     * horasPorMotivo, que solo cuenta salidas ya finalizadas.
      */
     private function rankingHorasFuera(Collection $papeletas): Collection
     {
@@ -349,9 +351,9 @@ class ReporteController extends Controller
             ->map(function (Collection $grupo) {
                 $segundos = $grupo->sum(function (Papeleta $papeleta) {
                     $salida = $papeleta->marcaciones->firstWhere('tipo', 'SALIDA');
-                    $retorno = $papeleta->marcaciones->firstWhere('tipo', 'RETORNO');
+                    $fin = $papeleta->finEfectivoParaHoras();
 
-                    return $salida->created_at->diffInSeconds($retorno?->created_at ?? now());
+                    return $fin ? $salida->created_at->diffInSeconds($fin) : 0;
                 });
 
                 return [

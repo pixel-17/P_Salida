@@ -186,6 +186,108 @@ class Papeleta extends Model
         return $this->esSinRetorno() ? 'Sin retorno' : 'No se presentó';
     }
 
+    /**
+     * Estado de sustento documental para el reporte "Sustentos": no es una
+     * columna de BD, se deriva de si el motivo exige documento y de la
+     * ÚLTIMA observación tipo JUSTIFICACION levantada sobre esta papeleta
+     * (ver ObservarPapeletaAction/ResponderObservacionAction).
+     *
+     * Regla clave: si tras responder una observación (atendida=true) el
+     * revisor levanta OTRA observación JUSTIFICACION después, esa nueva
+     * queda como "la última" — el documento anterior no sirvió. Por eso
+     * basta con mirar la más reciente, no hace falta recorrer todo el
+     * historial para saber si el sustento vigente es válido.
+     */
+    public function estadoSustento(): array
+    {
+        if (! $this->motivo?->requiere_documento) {
+            return ['codigo' => 'no_requiere', 'label' => 'No requiere', 'color' => 'gray'];
+        }
+
+        $observaciones = $this->relationLoaded('observacionesJustificacion')
+            ? $this->observacionesJustificacion
+            : $this->observaciones()->where('tipo', \App\Enums\TipoObservacion::JUSTIFICACION->value)->orderBy('created_at')->get();
+
+        $ultima = $observaciones->last();
+
+        if (! $ultima) {
+            return $this->adjuntos->isNotEmpty()
+                ? ['codigo' => 'presentado', 'label' => 'Presentado', 'color' => 'green']
+                : ['codigo' => 'sin_pedir', 'label' => 'Sin observar', 'color' => 'gray'];
+        }
+
+        if (! $ultima->atendida) {
+            return ['codigo' => 'pendiente', 'label' => 'Pendiente de subsanar', 'color' => 'red'];
+        }
+
+        // Respondida y nadie volvió a pedir después: quedó aceptada.
+        return ['codigo' => 'aceptado', 'label' => 'Subsanado', 'color' => 'green'];
+    }
+
+    public function observacionesJustificacion(): HasMany
+    {
+        return $this->hasMany(Observacion::class)
+            ->where('tipo', \App\Enums\TipoObservacion::JUSTIFICACION->value)
+            ->orderBy('created_at');
+    }
+
+    /**
+     * Fin efectivo para calcular "horas fuera": la marcación de RETORNO si
+     * existe. Si NO existe, el sistema ya no debe seguir contando con
+     * now() indefinidamente — el vigilante deja de poder registrar
+     * retornos pasada `hora_limite_registro_garita` (ver
+     * MarcarRetornoVigilanteAction), así que una vez pasado ese corte del
+     * día de la salida se considera cerrado ahí para efectos de reporte,
+     * aunque el trabajador nunca haya marcado.
+     *
+     * Esto NO borra evidencia de que nunca marcó: la papeleta sigue
+     * mostrándose VENCIDA con etiquetaVencimiento() = "Sin retorno" tal
+     * cual (ver MarcarPapeletasVencidasCommand). Solo evita que "horas
+     * fuera" crezca sin límite día tras día (antes: 118h+ para una
+     * papeletas de varios días atrás sin retorno; ahora: tope real de un
+     * solo día laboral).
+     */
+    public function finEfectivoParaHoras(): ?\Illuminate\Support\Carbon
+    {
+        $marcSalida = $this->marcacion(\App\Enums\TipoMarcacion::SALIDA);
+
+        if (! $marcSalida) {
+            return null;
+        }
+
+        $marcRetorno = $this->marcacion(\App\Enums\TipoMarcacion::RETORNO);
+
+        if ($marcRetorno) {
+            return $marcRetorno->created_at;
+        }
+
+        $cierreGarita = \Illuminate\Support\Carbon::parse(
+            $this->fecha_salida->format('Y-m-d').' '.config('papeletas.hora_limite_registro_garita')
+        );
+
+        return now()->min($cierreGarita);
+    }
+
+    /**
+     * Horas fuera redondeadas a 1 decimal, o null si nunca marcó salida
+     * (nada que contar). Wrapper de finEfectivoParaHoras() para los
+     * lugares que solo necesitan el número final de una papeleta (tabla
+     * de detalle, exportación); los rankings que SUMAN horas de muchas
+     * papeletas siguen trabajando con finEfectivoParaHoras() directo para
+     * no perder precisión al redondear antes de sumar.
+     */
+    public function horasFuera(): ?float
+    {
+        $marcSalida = $this->marcacion(\App\Enums\TipoMarcacion::SALIDA);
+        $fin = $this->finEfectivoParaHoras();
+
+        if (! $marcSalida || ! $fin) {
+            return null;
+        }
+
+        return round($marcSalida->created_at->diffInMinutes($fin) / 60, 1);
+    }
+
     // ---------- Scopes para bandejas por rol ----------
 
     public function scopePendientesDeJefe($query, int $jefeId)

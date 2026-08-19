@@ -142,9 +142,7 @@ class PapeletaController extends Controller
         foreach ($papeletas as $papeleta) {
             $marcSalida = $papeleta->marcacion(\App\Enums\TipoMarcacion::SALIDA);
             $marcRetorno = $papeleta->marcacion(\App\Enums\TipoMarcacion::RETORNO);
-            $horasFuera = $marcSalida
-                ? round($marcSalida->created_at->diffInMinutes($marcRetorno?->created_at ?? now()) / 60, 1)
-                : null;
+            $horasFuera = $papeleta->horasFuera();
 
             $hoja->fromArray([
                 $papeleta->codigo,

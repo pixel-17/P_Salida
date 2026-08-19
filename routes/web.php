@@ -14,6 +14,7 @@ use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\SedeController;
 use App\Http\Controllers\LiveCheckController;
+use App\Http\Controllers\SustentoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VigilanteController;
@@ -113,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:RRHH|JEFE|ADMINISTRADOR', 'throttle:60,1'])->group(function () {
         Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
         Route::get('/reportes/exportar', [ReporteController::class, 'exportar'])->name('reportes.exportar');
+        Route::get('/sustentos', [SustentoController::class, 'index'])->name('sustentos.index');
     });
 
     // ---------- Panel y catálogos: solo ADMINISTRADOR ----------
