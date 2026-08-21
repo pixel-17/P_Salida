@@ -25,13 +25,22 @@ class CancelarPapeletaAction
     {
         Gate::forUser($usuario)->authorize('cancelar', $papeleta);
 
-        $estadoAnteriorCodigo = $papeleta->estado->codigo;
+        DB::transaction(function () use ($papeleta, $usuario, $motivo) {
+            // Lock + re-chequeo de autorización contra el estado real: evita
+            // cancelar una papeleta que, entre el check inicial y este punto,
+            // ya cambió de estado (ej. el vigilante ya marcó salida, o el
+            // barrido de fin de día ya la cerró). Mismo patrón que
+            // AprobarPapeletaAction.
+            $papeletaLock = Papeleta::whereKey($papeleta->id)->lockForUpdate()->first();
 
-        DB::transaction(function () use ($papeleta, $usuario, $motivo, $estadoAnteriorCodigo) {
-            $papeleta->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::CANCELADO)->id]);
+            Gate::forUser($usuario)->authorize('cancelar', $papeletaLock);
+
+            $estadoAnteriorCodigo = $papeletaLock->estado->codigo;
+
+            $papeletaLock->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::CANCELADO)->id]);
 
             HistorialPapeleta::registrar(
-                $papeleta,
+                $papeletaLock,
                 $usuario,
                 'CANCELADA_POR_TRABAJADOR',
                 $estadoAnteriorCodigo,

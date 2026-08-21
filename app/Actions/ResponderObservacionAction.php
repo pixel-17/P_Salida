@@ -51,12 +51,27 @@ class ResponderObservacionAction
             : EstadoPapeleta::SOLICITADO;
 
         DB::transaction(function () use ($papeleta, $trabajador, $respuesta, $observacion, $estadoDestino) {
+            // Lock + re-chequeo: evita responder dos veces la misma
+            // observación (doble clic, dos pestañas) — el segundo relee y
+            // encuentra la papeleta fuera de OBSERVADO, así que falla
+            // limpio en vez de duplicar el historial/notificación. Mismo
+            // patrón que AprobarPapeletaAction.
+            $papeletaLock = Papeleta::whereKey($papeleta->id)->lockForUpdate()->first();
+
+            Gate::forUser($trabajador)->authorize('responderObservacion', $papeletaLock);
+
+            if ($observacion->fresh()->atendida) {
+                throw ValidationException::withMessages([
+                    'respuesta' => 'Esta observación ya fue respondida.',
+                ]);
+            }
+
             $observacion->update(['atendida' => true]);
 
-            $papeleta->update(['estado_id' => Estado::porCodigo($estadoDestino)->id]);
+            $papeletaLock->update(['estado_id' => Estado::porCodigo($estadoDestino)->id]);
 
             HistorialPapeleta::registrar(
-                $papeleta, $trabajador, 'RESPONDIO_OBSERVACION',
+                $papeletaLock, $trabajador, 'RESPONDIO_OBSERVACION',
                 EstadoPapeleta::OBSERVADO->value, $estadoDestino->value, $respuesta
             );
         });

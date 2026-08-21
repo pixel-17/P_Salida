@@ -23,6 +23,7 @@ use App\Models\Sede;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -242,12 +243,24 @@ class TestDataSeeder extends Seeder
             }
 
             // Un adjunto y una notificación por papeleta, para tener 5 en cada tabla.
+            // Antes solo se insertaba la fila en BD sin el archivo físico
+            // correspondiente: cualquier intento de descarga tronaba con
+            // UnableToRetrieveMetadata porque el disco no encontraba nada
+            // en esa ruta. Ahora se escribe un PDF mínimo real en el disco
+            // 'local' y el 'peso' se toma del archivo ya escrito, no de un
+            // número inventado que podía no coincidir.
+            $rutaAdjunto = "adjuntos/seed/{$papeleta->id}.pdf";
+            Storage::disk('local')->put(
+                $rutaAdjunto,
+                "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF"
+            );
+
             Adjunto::create([
                 'papeleta_id' => $papeleta->id,
                 'nombre_original' => "sustento_{$papeleta->codigo}.pdf",
-                'archivo' => "adjuntos/seed/{$papeleta->id}.pdf",
+                'archivo' => $rutaAdjunto,
                 'extension' => 'pdf',
-                'peso' => 102400,
+                'peso' => Storage::disk('local')->size($rutaAdjunto),
             ]);
 
             NotificacionSistema::create([

@@ -26,22 +26,31 @@ class ObservarPapeletaAction
     ): Papeleta {
         Gate::forUser($usuario)->authorize('decidir', $papeleta);
 
-        $estadoAnteriorCodigo = $papeleta->estado->codigo;
         // Mismo caso que en RechazarPapeletaAction: $usuario->rol no existe.
         $rolActuando = $usuario->hasRole(RolUsuario::JEFE) ? RolUsuario::JEFE : RolUsuario::RRHH;
 
-        DB::transaction(function () use ($papeleta, $usuario, $comentario, $tipo, $rolActuando, $estadoAnteriorCodigo) {
-            $papeleta->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::OBSERVADO)->id]);
+        DB::transaction(function () use ($papeleta, $usuario, $comentario, $tipo, $rolActuando) {
+            // Lock + re-chequeo de autorización contra el estado real: sin
+            // esto, dos decisiones simultáneas sobre la misma papeleta
+            // (ej. observar en una pestaña y rechazar en otra) podían
+            // pisarse sin error visible. Mismo patrón que AprobarPapeletaAction.
+            $papeletaLock = Papeleta::whereKey($papeleta->id)->lockForUpdate()->first();
+
+            Gate::forUser($usuario)->authorize('decidir', $papeletaLock);
+
+            $estadoAnteriorCodigo = $papeletaLock->estado->codigo;
+
+            $papeletaLock->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::OBSERVADO)->id]);
 
             Observacion::create([
-                'papeleta_id' => $papeleta->id,
+                'papeleta_id' => $papeletaLock->id,
                 'usuario_id' => $usuario->id,
                 'tipo' => $tipo->value,
                 'comentario' => $comentario,
             ]);
 
             FlujoAprobacion::create([
-                'papeleta_id' => $papeleta->id,
+                'papeleta_id' => $papeletaLock->id,
                 'usuario_id' => $usuario->id,
                 'rol' => $rolActuando->value,
                 'accion' => AccionFlujo::OBSERVADO->value,
@@ -49,7 +58,7 @@ class ObservarPapeletaAction
             ]);
 
             HistorialPapeleta::registrar(
-                $papeleta, $usuario, 'OBSERVADA', $estadoAnteriorCodigo, EstadoPapeleta::OBSERVADO->value, $comentario
+                $papeletaLock, $usuario, 'OBSERVADA', $estadoAnteriorCodigo, EstadoPapeleta::OBSERVADO->value, $comentario
             );
         });
 

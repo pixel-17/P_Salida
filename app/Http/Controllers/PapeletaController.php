@@ -30,6 +30,18 @@ class PapeletaController extends Controller
         $vista = $request->get('vista', 'pendientes') === 'todas' ? 'todas' : 'pendientes';
 
         $papeletas = match (true) {
+            // Administrador: acceso total sin restricción de bandeja — ve
+            // y busca cualquier papeleta sin importar estado, trabajador o
+            // jefe asignado. No tiene concepto de "pendientes" (no decide
+            // aprobaciones, ver PapeletaPolicy::decidir), así que ignora el
+            // toggle vista y siempre trae el universo completo.
+            $user->hasRole(RolUsuario::ADMINISTRADOR) => Papeleta::query()
+                ->conFiltros($filtros)
+                ->with(['trabajador', 'jefe', 'motivo', 'estado'])
+                ->latest('fecha_salida')
+                ->paginate(15)
+                ->withQueryString(),
+
             $user->hasRole(RolUsuario::JEFE) => ($vista === 'todas'
                     ? Papeleta::deSuEquipo($user->id)
                     : Papeleta::pendientesDeJefe($user->id))
@@ -67,7 +79,7 @@ class PapeletaController extends Controller
                     'destino' => $p->destino,
                     'fecha_salida' => $p->fecha_salida->format('d/m/Y'),
                     'motivo' => $p->motivo->nombre,
-                    'trabajador' => ($user->esJefe() || $user->esRrhh()) ? $p->trabajador->name : null,
+                    'trabajador' => ($user->esJefe() || $user->esRrhh() || $user->esAdmin()) ? $p->trabajador->name : null,
                     'estado' => ['nombre' => $p->estado->nombre, 'color' => $p->estado->color],
                     'url' => route('papeletas.show', $p),
                 ]),
@@ -80,7 +92,7 @@ class PapeletaController extends Controller
             ]);
         }
 
-        $areas = ($user->esJefe() || $user->esRrhh())
+        $areas = ($user->esJefe() || $user->esRrhh() || $user->esAdmin())
             ? Area::activas()->orderBy('nombre')->get()
             : collect();
 

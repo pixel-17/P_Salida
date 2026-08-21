@@ -20,17 +20,26 @@ class RechazarPapeletaAction
     {
         Gate::forUser($usuario)->authorize('decidir', $papeleta);
 
-        $estadoAnteriorCodigo = $papeleta->estado->codigo;
         // $usuario->rol no existe (los roles van por Spatie, vía hasRole),
         // siempre daba null -> quedaba mal registrado como "RRHH" incluso
         // cuando rechazaba el Jefe.
         $rolActuando = $usuario->hasRole(RolUsuario::JEFE) ? RolUsuario::JEFE : RolUsuario::RRHH;
 
-        DB::transaction(function () use ($papeleta, $usuario, $comentario, $rolActuando, $estadoAnteriorCodigo) {
-            $papeleta->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::RECHAZADO)->id]);
+        DB::transaction(function () use ($papeleta, $usuario, $comentario, $rolActuando) {
+            // Lock + re-chequeo de autorización contra el estado real: evita
+            // que dos decisiones simultáneas (aprobar en una pestaña,
+            // rechazar en otra) se pisen sin error visible. Mismo patrón
+            // que AprobarPapeletaAction.
+            $papeletaLock = Papeleta::whereKey($papeleta->id)->lockForUpdate()->first();
+
+            Gate::forUser($usuario)->authorize('decidir', $papeletaLock);
+
+            $estadoAnteriorCodigo = $papeletaLock->estado->codigo;
+
+            $papeletaLock->update(['estado_id' => Estado::porCodigo(EstadoPapeleta::RECHAZADO)->id]);
 
             FlujoAprobacion::create([
-                'papeleta_id' => $papeleta->id,
+                'papeleta_id' => $papeletaLock->id,
                 'usuario_id' => $usuario->id,
                 'rol' => $rolActuando->value,
                 'accion' => AccionFlujo::RECHAZADO->value,
@@ -38,7 +47,7 @@ class RechazarPapeletaAction
             ]);
 
             HistorialPapeleta::registrar(
-                $papeleta, $usuario, 'RECHAZADA', $estadoAnteriorCodigo, EstadoPapeleta::RECHAZADO->value, $comentario
+                $papeletaLock, $usuario, 'RECHAZADA', $estadoAnteriorCodigo, EstadoPapeleta::RECHAZADO->value, $comentario
             );
         });
 

@@ -8,8 +8,8 @@ use App\Models\Adjunto;
 use App\Models\Papeleta;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdjuntoController extends Controller
 {
@@ -55,13 +55,23 @@ class AdjuntoController extends Controller
         return back()->with('status', 'Documento adjuntado.');
     }
 
-    public function download(Adjunto $adjunto): Response
+    public function download(Adjunto $adjunto): StreamedResponse
     {
         $this->authorize('ver', $adjunto->papeleta);
+
+        // Adjunto huérfano: la fila en BD existe pero el archivo físico no
+        // está en el disco (borrado a mano, migración de storage fallida,
+        // etc.). Sin este chequeo, Storage::response() truena con
+        // UnableToRetrieveMetadata (500) en vez de un 404 controlado.
+        if (! Storage::disk('local')->exists($adjunto->archivo)) {
+            abort(404, 'El archivo ya no está disponible en el servidor.');
+        }
 
         // ->response() (no ->download()) sirve el archivo "inline": el
         // navegador lo abre/previsualiza directo (importante para PDFs),
         // en vez de forzar la descarga.
+        // Nota: el disco 'local' devuelve StreamedResponse (no Response),
+        // por eso el type-hint del método debe coincidir con ese tipo real.
         return Storage::disk('local')->response($adjunto->archivo, $adjunto->nombre_original);
     }
 

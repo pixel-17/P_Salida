@@ -5,12 +5,14 @@
                 <h2 class="font-bold text-2xl text-gray-800 tracking-tight">
                     @if(auth()->user()->esJefe()) Bandeja de Aprobación
                     @elseif(auth()->user()->esRrhh()) Bandeja RRHH
+                    @elseif(auth()->user()->esAdmin()) Todas las Papeletas
                     @else Mis Papeletas
                     @endif
                 </h2>
                 <p class="text-sm text-gray-500 mt-0.5">
                     @if(auth()->user()->esJefe()) Solicitudes de tu área.
                     @elseif(auth()->user()->esRrhh()) Solicitudes aprobadas por el jefe de área.
+                    @elseif(auth()->user()->esAdmin()) Búsqueda global: cualquier estado, trabajador o jefe.
                     @else Historial de tus solicitudes de salida.
                     @endif
                 </p>
@@ -198,7 +200,7 @@
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">
                         <p class="font-semibold text-sm text-gray-800">{{ $papeleta->codigo }}</p>
-                        @if(auth()->user()->esJefe() || auth()->user()->esRrhh())
+                        @if(auth()->user()->esJefe() || auth()->user()->esRrhh() || auth()->user()->esAdmin())
                             <span class="text-xs text-gray-400">· {{ $papeleta->trabajador->name }}</span>
                         @endif
                     </div>
