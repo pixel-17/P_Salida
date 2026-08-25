@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Enums\EstadoPapeleta;
 use App\Enums\TipoMarcacion;
+use App\Models\Configuracion;
 use App\Models\Estado;
 use App\Models\HistorialPapeleta;
 use App\Models\Marcacion;
@@ -25,7 +26,7 @@ class MarcarRetornoVigilanteAction
     {
         Gate::forUser($vigilante)->authorize('marcarComoVigilante', $papeleta);
 
-        $horaLimite = config('papeletas.hora_limite_registro_garita');
+        $horaLimite = Configuracion::obtener('hora_limite_registro_garita', '17:00');
 
         if ($horaLimite && now()->greaterThan(today()->setTimeFromTimeString($horaLimite))) {
             throw ValidationException::withMessages([

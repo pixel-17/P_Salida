@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Configuracion;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
@@ -44,7 +45,7 @@ class StorePapeletaRequest extends FormRequest
 
             $fecha = Carbon::parse($this->input('fecha_salida'))->toDateString();
 
-            $diasNoLaborables = config('papeletas.dias_no_laborables', []);
+            $diasNoLaborables = Configuracion::diasNoLaborables();
             if (in_array(Carbon::parse($fecha)->dayOfWeek, $diasNoLaborables, true)) {
                 $validator->errors()->add(
                     'fecha_salida',
@@ -52,8 +53,8 @@ class StorePapeletaRequest extends FormRequest
                 );
             }
 
-            $horarioInicio = config('papeletas.horario_laboral.inicio');
-            $horarioFin = config('papeletas.horario_laboral.fin');
+            $horarioInicio = Configuracion::obtener('horario_laboral_inicio', '07:00');
+            $horarioFin = Configuracion::obtener('horario_laboral_fin', '19:00');
 
             $horaSalida = Carbon::parse($fecha.' '.$this->input('hora_salida_programada'));
             $limiteInicio = Carbon::parse($fecha.' '.$horarioInicio);

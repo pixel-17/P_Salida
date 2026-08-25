@@ -6,6 +6,7 @@ use App\Actions\MarcarRetornoVigilanteAction;
 use App\Actions\MarcarSalidaVigilanteAction;
 use App\Enums\EstadoPapeleta;
 use App\Enums\TipoMarcacion;
+use App\Models\Configuracion;
 use App\Models\Papeleta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -33,7 +34,7 @@ class VigilanteController extends Controller
 
         return view('vigilancia.index', [
             'sedeNombre' => $user->sede?->nombre,
-            'horaLimiteRegistro' => config('papeletas.hora_limite_registro_garita'),
+            'horaLimiteRegistro' => Configuracion::obtener('hora_limite_registro_garita', '17:00'),
         ]);
     }
 

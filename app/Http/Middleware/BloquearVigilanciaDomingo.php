@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Configuracion;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -10,7 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Bloquea por completo la garita (vista y TODAS sus acciones: resumen,
  * buscar, confirmar salida/retorno) los días no laborables — hoy en día
- * solo domingo, ver config('papeletas.dias_no_laborables'). Mismo criterio
+ * solo domingo, y configurable por el ADMINISTRADOR (ver
+ * Configuracion::diasNoLaborables). Mismo criterio
  * que ya usa StorePapeletaRequest para no dejar crear papeletas esos días:
  * si no se trabaja, tampoco hay nada que marcar en la puerta.
  *
@@ -22,7 +24,7 @@ class BloquearVigilanciaDomingo
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $diasNoLaborables = config('papeletas.dias_no_laborables', []);
+        $diasNoLaborables = Configuracion::diasNoLaborables();
 
         if (! in_array(Carbon::now()->dayOfWeek, $diasNoLaborables, true)) {
             return $next($request);

@@ -262,7 +262,7 @@ class Papeleta extends Model
         }
 
         $cierreGarita = \Illuminate\Support\Carbon::parse(
-            $this->fecha_salida->format('Y-m-d').' '.config('papeletas.hora_limite_registro_garita')
+            $this->fecha_salida->format('Y-m-d').' '.\App\Models\Configuracion::obtener('hora_limite_registro_garita', '17:00')
         );
 
         return now()->min($cierreGarita);

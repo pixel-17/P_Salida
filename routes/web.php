@@ -4,6 +4,7 @@ use App\Http\Controllers\AdjuntoController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AprobacionController;
 use App\Http\Controllers\AreaController;
+use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CargoController;
 use App\Http\Controllers\EquipoController;
@@ -125,6 +126,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/live-check/{tabla}', LiveCheckController::class)->name('admin.live-check');
         Route::get('/admin/dashboard', AdminDashboardController::class)->name('admin.dashboard');
         Route::get('/admin/auditoria', [AuditLogController::class, 'index'])->name('admin.auditoria');
+        Route::get('/configuracion', [ConfiguracionController::class, 'edit'])->name('configuracion.edit');
+        Route::put('/configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
 
         Route::resource('areas', AreaController::class)->except(['show']);
         Route::resource('cargos', CargoController::class)->except(['show']);
