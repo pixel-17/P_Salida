@@ -79,6 +79,13 @@
                             ['label' => 'Motivos', 'route' => route('motivos.index'), 'active' => 'motivos.*', 'icon' => 'clipboard'],
                         ],
                     ],
+                    [
+                        'label' => 'Sistema',
+                        'items' => [
+                            ['label' => 'Configuración', 'route' => route('configuracion.edit'), 'active' => 'configuracion.*', 'icon' => 'clock'],
+                            ['label' => 'Auditoría', 'route' => route('admin.auditoria'), 'active' => 'admin.auditoria', 'icon' => 'shield'],
+                        ],
+                    ],
                 ];
             } elseif ($usuario->esRrhh()) {
                 $pendientesRrhh = \App\Models\Papeleta::pendientesDeRrhh()->count();
