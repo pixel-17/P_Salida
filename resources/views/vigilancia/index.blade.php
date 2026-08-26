@@ -344,9 +344,10 @@
                     window.addEventListener('beforeunload', () => window.detenerEscaneoQr());
                 },
 
-                // Compara contra el horario límite configurado en el server
-                // (config('papeletas.hora_limite_registro_garita')), no un
-                // valor fijo en el front — si cambia la config, esto lo sigue.
+                // Compara contra el horario límite calculado en el server
+                // (Configuracion::horaLimiteGarita() = fin de jornada + 10
+                // min), no un valor fijo en el front — si cambia el fin de
+                // jornada, esto lo sigue.
                 evaluarHorario() {
                     const [h, m] = this.horaLimite.split(':').map(Number);
                     const limite = new Date();

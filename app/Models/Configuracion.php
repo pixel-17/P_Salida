@@ -52,4 +52,27 @@ class Configuracion extends Model
     {
         return static::obtenerBool('domingo_laborable') ? [] : [0];
     }
+
+    /**
+     * Hora límite para que el vigilante confirme salidas/retornos en
+     * garita: SIEMPRE derivada de horario_laboral_fin + 10 minutos de
+     * cortesía, nunca un valor propio editable por separado.
+     *
+     * Antes existía como clave independiente ('hora_limite_registro_garita')
+     * configurable aparte del horario laboral, lo que permitía al admin
+     * guardar una combinación inconsistente (p. ej. límite de garita antes
+     * del fin — o incluso antes del inicio — de la jornada), dejando
+     * papeletas creadas dentro de horario laboral que el vigilante nunca
+     * podía marcar. Al calcularse siempre a partir de horario_laboral_fin
+     * queda una sola fuente de verdad y esa inconsistencia ya no es
+     * posible.
+     */
+    public static function horaLimiteGarita(): string
+    {
+        $horarioFin = static::obtener('horario_laboral_fin', '19:00');
+
+        return \Illuminate\Support\Carbon::parse($horarioFin)
+            ->addMinutes(10)
+            ->format('H:i');
+    }
 }

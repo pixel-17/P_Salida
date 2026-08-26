@@ -33,11 +33,12 @@ return [
     | Horario límite de la garita
     |--------------------------------------------------------------------------
     |
-    | Usado por MarcarSalidaVigilanteAction y MarcarRetornoVigilanteAction:
-    | pasada esta hora el vigilante ya no puede confirmar salidas ni
-    | retornos (sí puede seguir consultando "Hoy" y buscando). Ajusta aquí,
-    | no en las Actions.
+    | Ya NO es un valor independiente: se calcula siempre en
+    | App\Models\Configuracion::horaLimiteGarita() como
+    | horario_laboral_fin + 10 minutos, para que nunca pueda quedar
+    | desincronizado del horario laboral (ver ConfiguracionController).
+    | Esta clave se deja documentada aquí solo por referencia histórica,
+    | ningún código la lee.
     |
     */
-    'hora_limite_registro_garita' => '17:00',
 ];

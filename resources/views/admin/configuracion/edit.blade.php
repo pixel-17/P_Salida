@@ -26,14 +26,7 @@
                         value="{{ old('horario_laboral_fin', $horarioFin) }}" class="input-glass">
                 </div>
             </div>
-            <p class="text-xs text-gray-500 mt-1.5">Solo se podrán registrar salidas programadas dentro de este rango.</p>
-        </div>
-
-        <div>
-            <label class="block font-semibold text-sm text-gray-600 mb-1.5">Hora límite de registro en garita</label>
-            <input type="time" name="hora_limite_registro_garita" required
-                value="{{ old('hora_limite_registro_garita', $horaLimiteGarita) }}" class="input-glass max-w-[160px]">
-            <p class="text-xs text-gray-500 mt-1.5">Pasada esta hora, el vigilante ya no podrá confirmar salidas ni retornos.</p>
+            <p class="text-xs text-gray-500 mt-1.5">Solo se podrán registrar salidas programadas dentro de este rango. El vigilante podrá confirmar salidas y retornos en garita hasta 10 minutos después del fin de jornada.</p>
         </div>
 
         <div>

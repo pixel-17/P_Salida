@@ -26,7 +26,7 @@ class MarcarRetornoVigilanteAction
     {
         Gate::forUser($vigilante)->authorize('marcarComoVigilante', $papeleta);
 
-        $horaLimite = Configuracion::obtener('hora_limite_registro_garita', '17:00');
+        $horaLimite = Configuracion::horaLimiteGarita();
 
         if ($horaLimite && now()->greaterThan(today()->setTimeFromTimeString($horaLimite))) {
             throw ValidationException::withMessages([

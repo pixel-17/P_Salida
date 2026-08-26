@@ -235,7 +235,7 @@ class Papeleta extends Model
      * Fin efectivo para calcular "horas fuera": la marcación de RETORNO si
      * existe. Si NO existe, el sistema ya no debe seguir contando con
      * now() indefinidamente — el vigilante deja de poder registrar
-     * retornos pasada `hora_limite_registro_garita` (ver
+     * retornos pasada `Configuracion::horaLimiteGarita()` (ver
      * MarcarRetornoVigilanteAction), así que una vez pasado ese corte del
      * día de la salida se considera cerrado ahí para efectos de reporte,
      * aunque el trabajador nunca haya marcado.
@@ -262,7 +262,7 @@ class Papeleta extends Model
         }
 
         $cierreGarita = \Illuminate\Support\Carbon::parse(
-            $this->fecha_salida->format('Y-m-d').' '.\App\Models\Configuracion::obtener('hora_limite_registro_garita', '17:00')
+            $this->fecha_salida->format('Y-m-d').' '.\App\Models\Configuracion::horaLimiteGarita()
         );
 
         return now()->min($cierreGarita);

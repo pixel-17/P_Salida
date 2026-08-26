@@ -34,7 +34,7 @@ class VigilanteController extends Controller
 
         return view('vigilancia.index', [
             'sedeNombre' => $user->sede?->nombre,
-            'horaLimiteRegistro' => Configuracion::obtener('hora_limite_registro_garita', '17:00'),
+            'horaLimiteRegistro' => Configuracion::horaLimiteGarita(),
         ]);
     }
 
