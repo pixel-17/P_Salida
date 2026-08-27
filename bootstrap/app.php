@@ -29,5 +29,34 @@ return Application::configure(basePath: dirname(__DIR__))
         // acepte la sugerencia (ver ForzarCambioPasswordController).
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Antes de esto, un 500 en producción solo quedaba en
+        // storage/logs/laravel.log — nadie lo veía hasta que un usuario se
+        // quejaba. No agrega un servicio nuevo (Sentry/Flare, etc.): usa el
+        // canal 'slack' que ya existe en config/logging.php, así que solo
+        // requiere que el .env de producción tenga LOG_SLACK_WEBHOOK_URL y
+        // que LOG_STACK incluya "slack" (p. ej. LOG_STACK=single,slack).
+        // Se excluyen expresamente las excepciones de validación/auth/404,
+        // que son tráfico normal, no incidentes.
+        $exceptions->report(function (\Throwable $e) {
+            // Sin webhook configurado (local/testing), no intentamos loguear
+            // a Slack: el handler de Monolog revienta con una URL vacía, y
+            // el reporte normal a storage/logs ya ocurre solo (comportamiento
+            // por defecto de Laravel, este closure no lo reemplaza).
+            if (! config('logging.channels.slack.url')) {
+                return;
+            }
+
+            if ($e instanceof \Illuminate\Validation\ValidationException
+                || $e instanceof \Illuminate\Auth\AuthenticationException
+                || $e instanceof \Illuminate\Auth\Access\AuthorizationException
+                || $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+                || $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                return;
+            }
+
+            \Illuminate\Support\Facades\Log::channel('slack')->critical($e->getMessage(), [
+                'excepcion' => get_class($e),
+                'archivo' => $e->getFile().':'.$e->getLine(),
+            ]);
+        });
     })->create();
