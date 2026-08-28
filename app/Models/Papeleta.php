@@ -328,6 +328,28 @@ class Papeleta extends Model
     }
 
     /**
+     * Bandeja "Pendientes" del trabajador: lo de hoy (para que vea su
+     * salida del día aunque ya esté finalizada) más cualquier papeleta
+     * suya que siga en trámite sin importar la fecha (p. ej. una
+     * observada la semana pasada que aún necesita su atención). Lo
+     * resuelto y archivado de días anteriores solo aparece en "todas".
+     */
+    public function scopePendientesDelTrabajador($query, int $trabajadorId)
+    {
+        return $query->where('trabajador_id', $trabajadorId)
+            ->where(function ($q) {
+                $q->whereDate('fecha_salida', now()->toDateString())
+                    ->orWhereHas('estado', fn ($q2) => $q2->whereNotIn('codigo', [
+                        EstadoPapeleta::FINALIZADO->value,
+                        EstadoPapeleta::RECHAZADO->value,
+                        EstadoPapeleta::CANCELADO->value,
+                        EstadoPapeleta::VENCIDA->value,
+                    ]));
+            })
+            ->latest('fecha_salida');
+    }
+
+    /**
      * Filtros comunes de bandeja: búsqueda por texto, estado, rango de fechas y área.
      * Cada clave es opcional; se aplica solo si viene presente y no vacía.
      */

@@ -18,6 +18,7 @@ class StorePapeletaRequest extends FormRequest
     {
         return [
             'motivo_id' => ['required', 'exists:motivos,id'],
+            'archivo' => ['nullable', 'file', 'max:5120', 'mimes:pdf,jpg,jpeg,png'],
             'destino' => ['required', 'string', 'max:255'],
             'motivo_detalle' => ['nullable', 'string'],
             'fecha_salida' => ['required', 'date', 'after_or_equal:today'],

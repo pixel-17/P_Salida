@@ -3,19 +3,27 @@
 namespace App\Actions;
 
 use App\Enums\EstadoPapeleta;
+use App\Models\Adjunto;
 use App\Models\Estado;
 use App\Models\HistorialPapeleta;
 use App\Models\Papeleta;
 use App\Models\User;
 use App\Notifications\PapeletaSolicitadaNotification;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CrearPapeletaAction
 {
-    public function execute(User $trabajador, array $datos): Papeleta
+    /**
+     * $archivo: sustento inicial, solo cuando el motivo lo exige (ver
+     * StorePapeletaRequest y Motivo::requiere_documento). Se guarda en la
+     * misma transacción que la papeleta para no dejar un registro huérfano
+     * si algo falla a medio camino.
+     */
+    public function execute(User $trabajador, array $datos, ?UploadedFile $archivo = null): Papeleta
     {
-        $papeleta = DB::transaction(function () use ($trabajador, $datos) {
+        $papeleta = DB::transaction(function () use ($trabajador, $datos, $archivo) {
             $papeleta = Papeleta::create([
                 'codigo' => $this->generarCodigo(),
                 'trabajador_id' => $trabajador->id,
@@ -30,6 +38,18 @@ class CrearPapeletaAction
                 'hora_salida_programada' => $datos['hora_salida_programada'],
                 'hora_retorno_programada' => $datos['hora_retorno_programada'] ?? null,
             ]);
+
+            if ($archivo) {
+                $ruta = $archivo->store("papeletas/{$papeleta->id}", 'local');
+
+                Adjunto::create([
+                    'papeleta_id' => $papeleta->id,
+                    'nombre_original' => $archivo->getClientOriginalName(),
+                    'archivo' => $ruta,
+                    'extension' => $archivo->getClientOriginalExtension(),
+                    'peso' => $archivo->getSize(),
+                ]);
+            }
 
             HistorialPapeleta::registrar(
                 $papeleta, $trabajador, 'CREADA', null, EstadoPapeleta::SOLICITADO->value,

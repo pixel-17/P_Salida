@@ -58,12 +58,13 @@
     URL con history.pushState para que "atrás" y recargar sigan funcionando. --}}
     <div id="lista-papeletas">
 
-    {{-- Toggle Pendientes / Todas — solo tiene sentido para Jefe/RRHH --}}
-    @if(auth()->user()->esJefe() || auth()->user()->esRrhh())
+    {{-- Toggle Pendientes / Todas — Jefe/RRHH/Trabajador. El Admin no tiene
+    concepto de bandeja (ver PapeletaController::index), así que no aplica. --}}
+    @if(auth()->user()->esJefe() || auth()->user()->esRrhh() || auth()->user()->esTrabajador())
         <div class="flex gap-1 mb-4 glass p-1 rounded-xl w-fit">
             {{-- Al volver a "Pendientes" se descarta cualquier estado_id que
-            venías arrastrando desde "Todas": esa bandeja ya está fijada a un
-            único estado (SOLICITADO para jefe, APROBADO_JEFE para RRHH), así
+            venías arrastrando desde "Todas": para Jefe/RRHH esa bandeja ya
+            está fijada a un único estado (SOLICITADO / APROBADO_JEFE), así
             que combinarla con otro estado_id siempre daba una lista vacía. --}}
             <a href="{{ route('papeletas.index', array_merge(collect($filtros)->except('estado_id')->all(), ['vista' => 'pendientes'])) }}"
                class="text-sm px-4 py-1.5 rounded-lg font-semibold transition-all duration-200 {{ $vista === 'pendientes' ? 'bg-white shadow-sm text-brand-700' : 'text-gray-500 hover:text-gray-700' }}">

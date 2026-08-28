@@ -95,12 +95,16 @@ class PapeletaPolicy
     }
 
     /**
-     * Adjuntar documento: solo el propio trabajador. Dos casos habilitan la
-     * subida:
-     *  - El motivo de la papeleta exige documento y todavía no tiene uno.
+     * Adjuntar documento: solo el propio trabajador. Cada subida reemplaza
+     * cualquier adjunto anterior (ver AdjuntoController::store) — nunca hay
+     * más de uno vigente por papeleta. Dos casos habilitan la subida:
+     *  - El motivo de la papeleta exige documento y todavía nadie decidió
+     *    (SOLICITADO): se puede subir o volver a subir para corregirlo.
+     *    Pasado ese punto (jefe/RRHH ya actuaron) ya no se toca sin pasar
+     *    por una observación.
      *  - Le observaron pidiendo sustento (JUSTIFICACION) y esa observación
-     *    sigue sin atender — aquí SÍ se permite sumar otro archivo aunque ya
-     *    tenga uno, porque es justo lo que la observación está pidiendo.
+     *    sigue sin atender — aquí SÍ se permite reemplazar aunque ya tenga
+     *    uno, porque es justo lo que la observación está pidiendo.
      */
     public function adjuntar(User $user, Papeleta $papeleta): bool
     {
@@ -116,7 +120,8 @@ class PapeletaPolicy
             return true;
         }
 
-        return $papeleta->motivo->requiere_documento && $papeleta->adjuntos->isEmpty();
+        return $papeleta->motivo->requiere_documento
+            && $papeleta->estado->codigo === EstadoPapeleta::SOLICITADO->value;
     }
 
     /**

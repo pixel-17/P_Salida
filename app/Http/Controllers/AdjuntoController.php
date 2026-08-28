@@ -23,14 +23,23 @@ class AdjuntoController extends Controller
 
         // Se busca ANTES de crear el adjunto: si lo que motivó la subida
         // fue una observación pidiendo sustento, el archivo ES la
-        // respuesta y queda ligado a ella (ver Adjunto::observacion) para
-        // que la Policy lo trate como evidencia y ya no se pueda borrar,
-        // sin importar el estado al que vuelva la papeleta después.
+        // respuesta y queda ligado a ella (ver Adjunto::observacion), lo
+        // que activa la protección de PapeletaPolicy::eliminarAdjunto
+        // contra borrado MANUAL. Esa protección no aplica acá abajo: el
+        // reemplazo automático por una subida nueva es una acción de
+        // sistema, no del botón "Quitar" del usuario.
         $observacionPendiente = $papeleta->observaciones()
             ->where('atendida', false)
             ->where('tipo', TipoObservacion::JUSTIFICACION->value)
             ->latest()
             ->first();
+
+        // Solo se conserva un adjunto vigente por papeleta: cualquier
+        // subida nueva reemplaza a la anterior (archivo físico + fila),
+        // sin importar si esta última era evidencia de una observación
+        // previa. El borrado pasa por Adjunto::booted() (evento deleting),
+        // que ya limpia el archivo del disco.
+        $papeleta->adjuntos->each->delete();
 
         $archivo = $request->file('archivo');
         $ruta = $archivo->store("papeletas/{$papeleta->id}", 'local');

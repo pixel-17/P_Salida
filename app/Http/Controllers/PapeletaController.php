@@ -24,23 +24,26 @@ class PapeletaController extends Controller
         $filtros = $request->only(['buscar', 'estado_id', 'area_id', 'desde', 'hasta']);
         $vista = $request->get('vista', 'pendientes') === 'todas' ? 'todas' : 'pendientes';
 
-        // Si nadie pidió un rango de fechas explícito, la bandeja por
-        // defecto solo trae de hoy en adelante (no el historial completo).
-        // Evita cargar/paginar años de papeletas antiguas en cada visita;
-        // quien de verdad necesita ver fechas pasadas lo pide a propósito
-        // con el filtro "desde" del formulario. $filtros (lo que llega a la
-        // vista para pintar chips/inputs) queda intacto para no alterar esa UI.
+        // Si nadie pidió un rango de fechas explícito, la bandeja de
+        // "pendientes" solo trae de hoy en adelante (no el historial
+        // completo), para evitar cargar/paginar años de papeletas antiguas
+        // en cada visita. La vista "todas" es precisamente para ver el
+        // historial completo, así que NO lleva esta restricción por
+        // defecto; quien quiera acotarla usa el filtro "desde"/"hasta" del
+        // formulario. $filtros (lo que llega a la vista para pintar
+        // chips/inputs) queda intacto para no alterar esa UI.
         $sinFiltroFecha = empty($filtros['desde']) && empty($filtros['hasta']);
+        $limitarAHoy = $sinFiltroFecha && $vista === 'pendientes';
 
         $papeletas = match (true) {
             // Administrador: acceso total sin restricción de bandeja — ve
             // y busca cualquier papeleta sin importar estado, trabajador o
             // jefe asignado. No tiene concepto de "pendientes" (no decide
             // aprobaciones, ver PapeletaPolicy::decidir), así que ignora el
-            // toggle vista y siempre trae el universo completo.
+            // toggle vista y siempre trae el universo completo, sin filtro
+            // de fecha por defecto.
             $user->hasRole(RolUsuario::ADMINISTRADOR) => Papeleta::query()
                 ->conFiltros($filtros)
-                ->when($sinFiltroFecha, fn ($q) => $q->whereDate('fecha_salida', '>=', now()->toDateString()))
                 ->with(['trabajador', 'jefe', 'motivo', 'estado'])
                 ->latest('fecha_salida')
                 ->paginate(15)
@@ -50,7 +53,7 @@ class PapeletaController extends Controller
                     ? Papeleta::deSuEquipo($user->id)
                     : Papeleta::pendientesDeJefe($user->id))
                 ->conFiltros($filtros)
-                ->when($sinFiltroFecha, fn ($q) => $q->whereDate('fecha_salida', '>=', now()->toDateString()))
+                ->when($limitarAHoy, fn ($q) => $q->whereDate('fecha_salida', '>=', now()->toDateString()))
                 ->with(['trabajador', 'motivo', 'estado'])
                 ->latest('fecha_salida')
                 ->paginate(15)
@@ -60,15 +63,19 @@ class PapeletaController extends Controller
                     ? Papeleta::query()
                     : Papeleta::pendientesDeRrhh())
                 ->conFiltros($filtros)
-                ->when($sinFiltroFecha, fn ($q) => $q->whereDate('fecha_salida', '>=', now()->toDateString()))
+                ->when($limitarAHoy, fn ($q) => $q->whereDate('fecha_salida', '>=', now()->toDateString()))
                 ->with(['trabajador', 'jefe', 'motivo', 'estado'])
                 ->latest('fecha_salida')
                 ->paginate(15)
                 ->withQueryString(),
 
-            default => Papeleta::delTrabajador($user->id)
+            // Trabajador: "pendientes" (default) es hoy + lo que aún está
+            // en trámite sin importar fecha; "todas" es su historial
+            // completo sin restricción de fecha ni estado.
+            default => ($vista === 'todas'
+                    ? Papeleta::delTrabajador($user->id)
+                    : Papeleta::pendientesDelTrabajador($user->id))
                 ->conFiltros($filtros)
-                ->when($sinFiltroFecha, fn ($q) => $q->whereDate('fecha_salida', '>=', now()->toDateString()))
                 ->with(['motivo', 'estado'])
                 ->paginate(15)
                 ->withQueryString(),
@@ -143,7 +150,7 @@ class PapeletaController extends Controller
 
     public function store(StorePapeletaRequest $request, CrearPapeletaAction $action): RedirectResponse
     {
-        $papeleta = $action->execute($request->user(), $request->validated());
+        $papeleta = $action->execute($request->user(), $request->validated(), $request->file('archivo'));
 
         return redirect()
             ->route('papeletas.show', $papeleta)

@@ -25,7 +25,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('papeletas.store') }}" class="glass-panel p-5 sm:p-6 space-y-5 animate-fade-in-up pb-32 sm:pb-6">
+    <form method="POST" action="{{ route('papeletas.store') }}" enctype="multipart/form-data" class="glass-panel p-5 sm:p-6 space-y-5 animate-fade-in-up pb-32 sm:pb-6">
         @csrf
 
         <div>
@@ -33,12 +33,21 @@
             <select id="motivo_id" name="motivo_id" required class="input-glass">
                 <option value="">Selecciona un motivo</option>
                 @foreach(\App\Models\Motivo::activos()->orderBy('nombre')->get() as $motivo)
-                    <option value="{{ $motivo->id }}" @selected(old('motivo_id') == $motivo->id)>
+                    <option value="{{ $motivo->id }}"
+                            data-requiere-documento="{{ $motivo->requiere_documento ? '1' : '0' }}"
+                            @selected(old('motivo_id') == $motivo->id)>
                         {{ $motivo->nombre }}
                     </option>
                 @endforeach
             </select>
             <x-input-error :messages="$errors->get('motivo_id')" />
+        </div>
+
+        <div id="campo-archivo" class="hidden">
+            <x-input-label for="archivo" value="Documento sustentatorio" />
+            <input type="file" id="archivo" name="archivo" accept=".pdf,.jpg,.jpeg,.png" class="input-glass">
+            <p class="text-xs text-gray-400 mt-1">PDF, JPG o PNG, máx. 5MB. Opcional — puedes adjuntarlo ahora o después.</p>
+            <x-input-error :messages="$errors->get('archivo')" />
         </div>
 
         <div>
@@ -98,6 +107,27 @@
             </div>
 
         </div>
+
+        <script>
+            // Muestra el campo de archivo si el motivo elegido tiene
+            // requiere_documento=true (ver Motivo model), como sugerencia
+            // — no es obligatorio al crear, el trabajador puede adjuntarlo
+            // después desde el detalle de la papeleta (ver
+            // papeletas/partials/show/_adjuntos.blade.php).
+            (function () {
+                const motivoSelect = document.getElementById('motivo_id');
+                const campoArchivo = document.getElementById('campo-archivo');
+
+                function toggleArchivo() {
+                    const opt = motivoSelect.selectedOptions[0];
+                    const requiere = opt?.dataset.requiereDocumento === '1';
+                    campoArchivo.classList.toggle('hidden', !requiere);
+                }
+
+                motivoSelect.addEventListener('change', toggleArchivo);
+                toggleArchivo(); // por si vuelve con old() tras un error de validación
+            })();
+        </script>
 
         <script>
             // Sincroniza dos UI alternativas del mismo horario: en móvil,

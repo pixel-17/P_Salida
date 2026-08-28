@@ -15,7 +15,9 @@
         @if($pideSustento)
             <p class="text-xs text-gray-400 mb-3">Te observaron pidiendo sustento — adjunta un documento para responder.</p>
         @elseif($papeleta->adjuntos->isEmpty())
-            <p class="text-xs text-gray-400 mb-3">Este motivo requiere adjuntar un documento (solo se admite uno).</p>
+            <p class="text-xs text-gray-400 mb-3">Este motivo requiere adjuntar un documento.</p>
+        @elseif(auth()->user()->can('adjuntar', $papeleta))
+            <p class="text-xs text-gray-400 mb-3">Subir uno nuevo reemplaza al actual.</p>
         @endif
 
         @foreach($papeleta->adjuntos as $adjunto)
@@ -42,7 +44,13 @@
                 <x-input-error :messages="$errors->get('archivo')" />
                 <p class="text-xs text-gray-400">PDF, JPG o PNG, máx. 5MB.</p>
                 <button class="btn-secondary w-full justify-center">
-                    {{ $pideSustento ? 'Subir y responder observación' : 'Subir documento' }}
+                    @if($pideSustento)
+                        Subir y responder observación
+                    @elseif($papeleta->adjuntos->isNotEmpty())
+                        Reemplazar documento
+                    @else
+                        Subir documento
+                    @endif
                 </button>
             </form>
         @elseif($papeleta->adjuntos->isEmpty())
