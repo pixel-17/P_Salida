@@ -2,10 +2,12 @@
 
 namespace App\Notifications;
 
+use App\Models\Papeleta;
+
 class PapeletaObservadaNotification extends BasePapeletaNotification
 {
     public function __construct(
-        \App\Models\Papeleta $papeleta,
+        Papeleta $papeleta,
         public string $comentario,
     ) {
         parent::__construct($papeleta);

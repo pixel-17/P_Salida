@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Event;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +22,7 @@ Artisan::command('inspire', function () {
  * producción.
  */
 if (! function_exists('conAlertaSiFalla')) {
-    function conAlertaSiFalla(\Illuminate\Console\Scheduling\Event $evento, string $comando): \Illuminate\Console\Scheduling\Event
+    function conAlertaSiFalla(Event $evento, string $comando): Event
     {
         return $evento->onFailure(function () use ($comando) {
             Log::critical("Comando programado falló: {$comando}", [

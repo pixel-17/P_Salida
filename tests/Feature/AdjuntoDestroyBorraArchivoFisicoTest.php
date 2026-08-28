@@ -9,6 +9,8 @@ use App\Models\Motivo;
 use App\Models\Papeleta;
 use App\Models\Sede;
 use App\Models\User;
+use Database\Seeders\EstadoSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -25,8 +27,8 @@ class AdjuntoDestroyBorraArchivoFisicoTest extends TestCase
 
     public function test_al_eliminar_un_adjunto_tambien_se_borra_el_archivo_del_disco(): void
     {
-        $this->seed(\Database\Seeders\RoleSeeder::class);
-        $this->seed(\Database\Seeders\EstadoSeeder::class);
+        $this->seed(RoleSeeder::class);
+        $this->seed(EstadoSeeder::class);
 
         Storage::fake('local');
 

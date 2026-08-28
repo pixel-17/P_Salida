@@ -4,11 +4,13 @@ namespace App\Models;
 
 use App\Enums\EstadoPapeleta;
 use App\Enums\TipoMarcacion;
+use App\Enums\TipoObservacion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 class Papeleta extends Model
 {
@@ -206,7 +208,7 @@ class Papeleta extends Model
 
         $observaciones = $this->relationLoaded('observacionesJustificacion')
             ? $this->observacionesJustificacion
-            : $this->observaciones()->where('tipo', \App\Enums\TipoObservacion::JUSTIFICACION->value)->orderBy('created_at')->get();
+            : $this->observaciones()->where('tipo', TipoObservacion::JUSTIFICACION->value)->orderBy('created_at')->get();
 
         $ultima = $observaciones->last();
 
@@ -227,7 +229,7 @@ class Papeleta extends Model
     public function observacionesJustificacion(): HasMany
     {
         return $this->hasMany(Observacion::class)
-            ->where('tipo', \App\Enums\TipoObservacion::JUSTIFICACION->value)
+            ->where('tipo', TipoObservacion::JUSTIFICACION->value)
             ->orderBy('created_at');
     }
 
@@ -247,22 +249,22 @@ class Papeleta extends Model
      * papeletas de varios días atrás sin retorno; ahora: tope real de un
      * solo día laboral).
      */
-    public function finEfectivoParaHoras(): ?\Illuminate\Support\Carbon
+    public function finEfectivoParaHoras(): ?Carbon
     {
-        $marcSalida = $this->marcacion(\App\Enums\TipoMarcacion::SALIDA);
+        $marcSalida = $this->marcacion(TipoMarcacion::SALIDA);
 
         if (! $marcSalida) {
             return null;
         }
 
-        $marcRetorno = $this->marcacion(\App\Enums\TipoMarcacion::RETORNO);
+        $marcRetorno = $this->marcacion(TipoMarcacion::RETORNO);
 
         if ($marcRetorno) {
             return $marcRetorno->created_at;
         }
 
-        $cierreGarita = \Illuminate\Support\Carbon::parse(
-            $this->fecha_salida->format('Y-m-d').' '.\App\Models\Configuracion::horaLimiteGarita()
+        $cierreGarita = Carbon::parse(
+            $this->fecha_salida->format('Y-m-d').' '.Configuracion::horaLimiteGarita()
         );
 
         return now()->min($cierreGarita);
@@ -286,7 +288,7 @@ class Papeleta extends Model
      */
     public function horasFuera(): ?float
     {
-        $marcSalida = $this->marcacion(\App\Enums\TipoMarcacion::SALIDA);
+        $marcSalida = $this->marcacion(TipoMarcacion::SALIDA);
         $fin = $this->finEfectivoParaHoras();
 
         if (! $marcSalida || ! $fin) {

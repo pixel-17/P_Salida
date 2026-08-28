@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Models\Papeleta;
+
 /**
  * CANCELADA ahora es exclusivamente la cancelación manual que hace el
  * propio trabajador desde su usuario (ver PapeletaController::cancelar).
@@ -10,7 +12,7 @@ namespace App\Notifications;
 class PapeletaCanceladaNotification extends BasePapeletaNotification
 {
     public function __construct(
-        \App\Models\Papeleta $papeleta,
+        Papeleta $papeleta,
         public string $motivo,
     ) {
         parent::__construct($papeleta);

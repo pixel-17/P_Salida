@@ -26,9 +26,7 @@ use Illuminate\Notifications\Notification;
  */
 abstract class BasePapeletaNotification extends Notification
 {
-    public function __construct(public Papeleta $papeleta)
-    {
-    }
+    public function __construct(public Papeleta $papeleta) {}
 
     abstract public function tipo(): string;
 

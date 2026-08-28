@@ -6,9 +6,12 @@ use App\Models\Adjunto;
 use App\Models\Area;
 use App\Models\Estado;
 use App\Models\Motivo;
+use App\Models\Observacion;
 use App\Models\Papeleta;
 use App\Models\Sede;
 use App\Models\User;
+use Database\Seeders\EstadoSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -24,8 +27,8 @@ class AdjuntoDestroyTest extends TestCase
      */
     private function crearPapeletaConAdjunto(string $estadoCodigo = 'SOLICITADO'): array
     {
-        $this->seed(\Database\Seeders\RoleSeeder::class);
-        $this->seed(\Database\Seeders\EstadoSeeder::class);
+        $this->seed(RoleSeeder::class);
+        $this->seed(EstadoSeeder::class);
 
         $area = Area::create(['nombre' => 'Operaciones']);
         $sede = Sede::create(['nombre' => 'Sede Central']);
@@ -138,7 +141,7 @@ class AdjuntoDestroyTest extends TestCase
         ['papeleta' => $papeleta, 'trabajador' => $trabajador, 'jefe' => $jefe]
             = $this->crearPapeletaConAdjunto('SOLICITADO');
 
-        $observacion = \App\Models\Observacion::create([
+        $observacion = Observacion::create([
             'papeleta_id' => $papeleta->id,
             'usuario_id' => $jefe->id,
             'tipo' => 'JUSTIFICACION',

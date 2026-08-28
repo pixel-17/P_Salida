@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -71,7 +72,7 @@ class Configuracion extends Model
     {
         $horarioFin = static::obtener('horario_laboral_fin', '19:00');
 
-        return \Illuminate\Support\Carbon::parse($horarioFin)
+        return Carbon::parse($horarioFin)
             ->addMinutes(10)
             ->format('H:i');
     }

@@ -2,13 +2,14 @@
 
 namespace Tests\Feature\Actions;
 
-use Tests\Support\PapeletaActionTestCase;
-
 use App\Actions\AprobarPapeletaAction;
 use App\Enums\RolUsuario;
+use App\Models\Estado;
 use App\Models\FlujoAprobacion;
+use App\Models\Papeleta;
+use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Facades\Notification;
+use Tests\Support\PapeletaActionTestCase;
 
 class AprobarPapeletaActionTest extends PapeletaActionTestCase
 {
@@ -49,7 +50,7 @@ class AprobarPapeletaActionTest extends PapeletaActionTestCase
     public function test_un_jefe_distinto_al_asignado_no_puede_aprobar(): void
     {
         $papeleta = $this->crearPapeleta('SOLICITADO');
-        $otroJefe = \App\Models\User::factory()->create(['sede_id' => $this->sede->id]);
+        $otroJefe = User::factory()->create(['sede_id' => $this->sede->id]);
         $otroJefe->assignRole('JEFE');
 
         $this->expectException(AuthorizationException::class);
@@ -77,8 +78,8 @@ class AprobarPapeletaActionTest extends PapeletaActionTestCase
         // que el estado es APROBADO_JEFE si no se hace refresh — simula la
         // foto que tendría un segundo worker/request que leyó el modelo
         // antes de que el primero terminara.
-        $papeletaDesactualizada = \App\Models\Papeleta::find($papeleta->id);
-        $papeletaDesactualizada->setRelation('estado', \App\Models\Estado::where('codigo', 'APROBADO_JEFE')->first());
+        $papeletaDesactualizada = Papeleta::find($papeleta->id);
+        $papeletaDesactualizada->setRelation('estado', Estado::where('codigo', 'APROBADO_JEFE')->first());
 
         $this->expectException(AuthorizationException::class);
 

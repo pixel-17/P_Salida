@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Area;
+use App\Models\Estado;
 use App\Models\Papeleta;
 use App\Support\ReporteExcelExporter;
 use App\Support\ReporteSalidasCalculator;
@@ -66,8 +68,8 @@ class ReporteController extends Controller
             'desde' => $desde->toDateString(),
             'hasta' => $hasta->toDateString(),
             'filtrosDetalle' => $filtrosDetalle,
-            'estados' => \App\Models\Estado::orderBy('orden')->get(),
-            'areas' => \App\Models\Area::orderBy('nombre')->get(),
+            'estados' => Estado::orderBy('orden')->get(),
+            'areas' => Area::orderBy('nombre')->get(),
             'totalSalidas' => $papeletas->count(),
             'esSoloJefe' => $esSoloJefe,
             'rankingTrabajadores' => ReporteSalidasCalculator::rankingTrabajadores($papeletas),
@@ -189,7 +191,7 @@ class ReporteController extends Controller
 
         if ($total > self::MAX_FILAS_REPORTE) {
             throw ValidationException::withMessages([
-                'reporte' => 'Hay '.number_format($total)." papeletas en ese rango; el máximo para calcular el reporte es "
+                'reporte' => 'Hay '.number_format($total).' papeletas en ese rango; el máximo para calcular el reporte es '
                     .number_format(self::MAX_FILAS_REPORTE).'. Acota el rango de fechas o el área e inténtalo de nuevo.',
             ]);
         }

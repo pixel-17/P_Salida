@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Area;
 use App\Models\Cargo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class CargoController extends Controller
     public function create(): View
     {
         return view('admin.cargos.create', [
-            'areas' => \App\Models\Area::activas()->orderBy('nombre')->get(),
+            'areas' => Area::activas()->orderBy('nombre')->get(),
         ]);
     }
 
@@ -39,7 +40,7 @@ class CargoController extends Controller
     {
         return view('admin.cargos.edit', [
             'cargo' => $cargo,
-            'areas' => \App\Models\Area::activas()->orderBy('nombre')->get(),
+            'areas' => Area::activas()->orderBy('nombre')->get(),
         ]);
     }
 

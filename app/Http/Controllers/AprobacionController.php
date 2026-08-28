@@ -9,9 +9,9 @@ use App\Actions\ResponderObservacionAction;
 use App\Enums\TipoObservacion;
 use App\Http\Requests\ObservarPapeletaRequest;
 use App\Http\Requests\RechazarPapeletaRequest;
+use App\Models\Papeleta;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Models\Papeleta;
 
 class AprobacionController extends Controller
 {

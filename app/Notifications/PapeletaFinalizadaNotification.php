@@ -24,9 +24,7 @@ class PapeletaFinalizadaNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Papeleta $papeleta)
-    {
-    }
+    public function __construct(public Papeleta $papeleta) {}
 
     public function via(object $notifiable): array
     {

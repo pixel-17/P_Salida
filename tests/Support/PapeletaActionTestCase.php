@@ -10,6 +10,8 @@ use App\Models\Motivo;
 use App\Models\Papeleta;
 use App\Models\Sede;
 use App\Models\User;
+use Database\Seeders\EstadoSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -40,8 +42,8 @@ abstract class PapeletaActionTestCase extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RoleSeeder::class);
-        $this->seed(\Database\Seeders\EstadoSeeder::class);
+        $this->seed(RoleSeeder::class);
+        $this->seed(EstadoSeeder::class);
 
         $this->sede = Sede::create(['nombre' => 'Sede Central']);
         $this->area = Area::create(['nombre' => 'Operaciones']);

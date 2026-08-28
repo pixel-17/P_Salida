@@ -2,14 +2,14 @@
 
 namespace Tests\Feature\Actions;
 
-use Tests\Support\PapeletaActionTestCase;
-
 use App\Actions\MarcarSalidaVigilanteAction;
 use App\Enums\TipoMarcacion;
+use App\Models\Papeleta;
 use App\Models\Sede;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
+use Tests\Support\PapeletaActionTestCase;
 
 class MarcarSalidaVigilanteActionTest extends PapeletaActionTestCase
 {
@@ -88,8 +88,8 @@ class MarcarSalidaVigilanteActionTest extends PapeletaActionTestCase
     {
         $papeleta = $this->crearPapeleta('APROBADO_RRHH');
 
-        $instanciaA = \App\Models\Papeleta::find($papeleta->id);
-        $instanciaB = \App\Models\Papeleta::find($papeleta->id);
+        $instanciaA = Papeleta::find($papeleta->id);
+        $instanciaB = Papeleta::find($papeleta->id);
 
         (new MarcarSalidaVigilanteAction)->execute($instanciaA, $this->vigilante);
 

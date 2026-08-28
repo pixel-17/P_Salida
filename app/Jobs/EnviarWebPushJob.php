@@ -39,8 +39,7 @@ class EnviarWebPushJob implements ShouldQueue
         public string $tipo,
         public string $titulo,
         public string $mensaje,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\ReporteController;
 use App\Models\Area;
 use App\Models\Estado;
 use App\Models\Motivo;
@@ -11,6 +12,7 @@ use App\Models\User;
 use Database\Seeders\EstadoSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -83,7 +85,7 @@ class ReporteExportarTest extends TestCase
         $trabajador = User::factory()->create(['sede_id' => $sede->id]);
         $trabajador->assignRole('TRABAJADOR');
 
-        $limite = (new \ReflectionClass(\App\Http\Controllers\ReporteController::class))
+        $limite = (new \ReflectionClass(ReporteController::class))
             ->getConstant('MAX_FILAS_REPORTE');
 
         $ahora = now();
@@ -102,7 +104,7 @@ class ReporteExportarTest extends TestCase
                 'updated_at' => $ahora,
             ])
             ->chunk(500)
-            ->each(fn ($lote) => \Illuminate\Support\Facades\DB::table('papeletas')->insert($lote->all()));
+            ->each(fn ($lote) => DB::table('papeletas')->insert($lote->all()));
 
         $response = $this->actingAs($rrhh)->get(route('reportes.exportar'));
 

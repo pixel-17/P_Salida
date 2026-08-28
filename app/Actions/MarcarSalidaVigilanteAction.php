@@ -46,7 +46,7 @@ class MarcarSalidaVigilanteAction
 
             throw ValidationException::withMessages([
                 'marcacion' => $dias > 0
-                    ? "Esta papeleta es para el {$fecha} — faltan {$dias} ".Str::plural('día', $dias).". No se puede marcar salida antes de la fecha autorizada."
+                    ? "Esta papeleta es para el {$fecha} — faltan {$dias} ".Str::plural('día', $dias).'. No se puede marcar salida antes de la fecha autorizada.'
                     : "La fecha autorizada para esta papeleta ({$fecha}) ya pasó.",
             ]);
         }

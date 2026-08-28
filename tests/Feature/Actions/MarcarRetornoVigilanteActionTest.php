@@ -2,11 +2,12 @@
 
 namespace Tests\Feature\Actions;
 
-use Tests\Support\PapeletaActionTestCase;
-
 use App\Actions\MarcarRetornoVigilanteAction;
 use App\Enums\TipoMarcacion;
+use App\Models\Papeleta;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
+use Tests\Support\PapeletaActionTestCase;
 
 class MarcarRetornoVigilanteActionTest extends PapeletaActionTestCase
 {
@@ -47,7 +48,7 @@ class MarcarRetornoVigilanteActionTest extends PapeletaActionTestCase
         // bloquea antes de llegar al chequeo interno de "ya tiene retorno"
         // — ese chequeo interno sigue vivo para la carrera concurrente, ver
         // test_doble_marcacion_de_retorno_simultanea_no_duplica.
-        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
+        $this->expectException(AuthorizationException::class);
 
         (new MarcarRetornoVigilanteAction)->execute($papeleta, $this->vigilante);
     }
@@ -62,8 +63,8 @@ class MarcarRetornoVigilanteActionTest extends PapeletaActionTestCase
         $papeleta = $this->crearPapeleta('EN_CURSO');
         $this->marcarSalida($papeleta);
 
-        $instanciaA = \App\Models\Papeleta::find($papeleta->id);
-        $instanciaB = \App\Models\Papeleta::find($papeleta->id);
+        $instanciaA = Papeleta::find($papeleta->id);
+        $instanciaB = Papeleta::find($papeleta->id);
 
         (new MarcarRetornoVigilanteAction)->execute($instanciaA, $this->vigilante);
 

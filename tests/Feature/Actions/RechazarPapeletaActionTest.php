@@ -2,13 +2,12 @@
 
 namespace Tests\Feature\Actions;
 
-use Tests\Support\PapeletaActionTestCase;
-
 use App\Actions\RechazarPapeletaAction;
 use App\Enums\RolUsuario;
 use App\Notifications\PapeletaRechazadaNotification;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Notification;
+use Tests\Support\PapeletaActionTestCase;
 
 class RechazarPapeletaActionTest extends PapeletaActionTestCase
 {

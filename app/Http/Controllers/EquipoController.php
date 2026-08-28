@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class EquipoController extends Controller
@@ -113,7 +114,7 @@ class EquipoController extends Controller
             'email' => ['required', 'email', 'unique:users,email,'.$trabajador->id],
             'dni' => ['required', 'digits:8', 'unique:users,dni,'.$trabajador->id],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'password' => ['nullable', \Illuminate\Validation\Rules\Password::defaults()],
+            'password' => ['nullable', Password::defaults()],
             'cargo_id' => ['nullable', 'exists:cargos,id'],
             'jefe_id' => ['required', 'exists:users,id'],
             'estado' => ['sometimes', 'boolean'],

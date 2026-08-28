@@ -1,11 +1,18 @@
 <?php
 
+use App\Http\Middleware\BloquearVigilanciaDomingo;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
-            'bloquear.domingo.vigilancia' => \App\Http\Middleware\BloquearVigilanciaDomingo::class,
+            'bloquear.domingo.vigilancia' => BloquearVigilanciaDomingo::class,
         ]);
 
         // Ya no se obliga a cambiar la contraseña: solo se sugiere con una
@@ -37,7 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // que LOG_STACK incluya "slack" (p. ej. LOG_STACK=single,slack).
         // Se excluyen expresamente las excepciones de validación/auth/404,
         // que son tráfico normal, no incidentes.
-        $exceptions->report(function (\Throwable $e) {
+        $exceptions->report(function (Throwable $e) {
             // Sin webhook configurado (local/testing), no intentamos loguear
             // a Slack: el handler de Monolog revienta con una URL vacía, y
             // el reporte normal a storage/logs ya ocurre solo (comportamiento
@@ -46,15 +53,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 return;
             }
 
-            if ($e instanceof \Illuminate\Validation\ValidationException
-                || $e instanceof \Illuminate\Auth\AuthenticationException
-                || $e instanceof \Illuminate\Auth\Access\AuthorizationException
-                || $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-                || $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+            if ($e instanceof ValidationException
+                || $e instanceof AuthenticationException
+                || $e instanceof AuthorizationException
+                || $e instanceof NotFoundHttpException
+                || $e instanceof ModelNotFoundException) {
                 return;
             }
 
-            \Illuminate\Support\Facades\Log::channel('slack')->critical($e->getMessage(), [
+            Log::channel('slack')->critical($e->getMessage(), [
                 'excepcion' => get_class($e),
                 'archivo' => $e->getFile().':'.$e->getLine(),
             ]);

@@ -16,6 +16,6 @@ class PapeletaVencidaNotification extends BasePapeletaNotification
 
     public function mensaje(): string
     {
-        return "No se registró el retorno dentro del horario permitido. Requiere regularización.";
+        return 'No se registró el retorno dentro del horario permitido. Requiere regularización.';
     }
 }

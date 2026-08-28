@@ -2,13 +2,12 @@
 
 namespace Tests\Feature\Actions;
 
-use Tests\Support\PapeletaActionTestCase;
-
 use App\Actions\CancelarPapeletaAction;
 use App\Models\User;
 use App\Notifications\PapeletaCanceladaNotification;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Notification;
+use Tests\Support\PapeletaActionTestCase;
 
 class CancelarPapeletaActionTest extends PapeletaActionTestCase
 {

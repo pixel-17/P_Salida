@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TipoObservacion;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -16,7 +17,7 @@ class ObservarPapeletaRequest extends FormRequest
     {
         return [
             'comentario' => ['required', 'string', 'max:1000'],
-            'tipo' => ['required', new Enum(\App\Enums\TipoObservacion::class)],
+            'tipo' => ['required', new Enum(TipoObservacion::class)],
         ];
     }
 }

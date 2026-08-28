@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cargo extends Model
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
+
     protected $table = 'cargos';
 
     protected $fillable = ['area_id', 'nombre', 'estado'];

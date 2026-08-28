@@ -2,9 +2,7 @@
 
 namespace Tests\Feature\Commands;
 
-use App\Enums\TipoMarcacion;
 use App\Models\Marcacion;
-use App\Models\Papeleta;
 use App\Notifications\PapeletaVencidaNotification;
 use Illuminate\Support\Facades\Notification;
 use Tests\Support\PapeletaActionTestCase;

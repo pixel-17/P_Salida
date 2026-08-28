@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Cargo;
 use App\Models\Papeleta;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Tests\Support\PapeletaActionTestCase;
 
@@ -101,7 +102,7 @@ class PapeletaControllerTest extends PapeletaActionTestCase
     {
         $propia = $this->crearPapeleta('SOLICITADO');
 
-        $otroTrabajador = \App\Models\User::factory()->create([
+        $otroTrabajador = User::factory()->create([
             'jefe_id' => $this->jefe->id,
             'sede_id' => $this->sede->id,
         ]);
@@ -122,9 +123,9 @@ class PapeletaControllerTest extends PapeletaActionTestCase
     {
         $deSuEquipo = $this->crearPapeleta('SOLICITADO');
 
-        $otroJefe = \App\Models\User::factory()->create(['sede_id' => $this->sede->id]);
+        $otroJefe = User::factory()->create(['sede_id' => $this->sede->id]);
         $otroJefe->assignRole('JEFE');
-        $otroTrabajador = \App\Models\User::factory()->create([
+        $otroTrabajador = User::factory()->create([
             'jefe_id' => $otroJefe->id,
             'sede_id' => $this->sede->id,
         ]);

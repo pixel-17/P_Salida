@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Actions;
 
-use Tests\Support\PapeletaActionTestCase;
-
 use App\Actions\ObservarPapeletaAction;
 use App\Actions\ResponderObservacionAction;
 use App\Enums\TipoObservacion;
+use Illuminate\Validation\ValidationException;
+use Tests\Support\PapeletaActionTestCase;
 
 class ObservarYResponderObservacionActionTest extends PapeletaActionTestCase
 {
@@ -76,7 +76,7 @@ class ObservarYResponderObservacionActionTest extends PapeletaActionTestCase
         // (ese lo cubre la Policy antes, con AuthorizationException).
         $papeleta = $this->crearPapeleta('OBSERVADO');
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         (new ResponderObservacionAction)->execute($papeleta, $this->trabajador, 'Nada que responder');
     }

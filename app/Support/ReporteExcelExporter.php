@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Illuminate\Support\Collection;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -38,7 +39,7 @@ class ReporteExcelExporter
         $hoja = $primeraHoja ? $spreadsheet->getActiveSheet() : $spreadsheet->createSheet();
         $hoja->setTitle($titulo);
 
-        $ultimaColumna = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($encabezados));
+        $ultimaColumna = Coordinate::stringFromColumnIndex(count($encabezados));
 
         // Fila de título con el rango de fechas del reporte, para que el
         // archivo tenga sentido por sí solo aunque se comparta suelto (sin

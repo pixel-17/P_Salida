@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sede extends Model
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $fillable = [
         'nombre', 'direccion', 'latitud', 'longitud', 'estado',
@@ -30,7 +30,7 @@ class Sede extends Model
     {
         return $this->hasMany(Papeleta::class);
     }
-     
+
     public function distanciaHaciaMetros(float $lat, float $lng): float
     {
         $radioTierra = 6371000;

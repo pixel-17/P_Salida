@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\RolUsuario;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,7 +11,7 @@ class StoreTrabajadorRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('crearTrabajador', \App\Models\User::class);
+        return $this->user()->can('crearTrabajador', User::class);
     }
 
     public function rules(): array
@@ -47,7 +48,7 @@ class StoreTrabajadorRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             if ($this->user()->esAdmin() && $this->filled('jefe_id')) {
-                $esJefe = \App\Models\User::role(RolUsuario::JEFE->value)
+                $esJefe = User::role(RolUsuario::JEFE->value)
                     ->whereKey($this->input('jefe_id'))
                     ->exists();
 
