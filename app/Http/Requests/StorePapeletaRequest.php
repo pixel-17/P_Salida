@@ -34,8 +34,9 @@ class StorePapeletaRequest extends FormRequest
      * contra "ahora mismo" condicionada a otro campo de fecha.
      *
      * De paso valida también horario laboral y días no laborables
-     * (config/papeletas.php) — mismo motivo: son reglas que cruzan varios
-     * campos, no encajan en `rules()`.
+     * (ver App\Models\Configuracion, editable por el ADMINISTRADOR en
+     * /configuracion) — mismo motivo: son reglas que cruzan varios campos,
+     * no encajan en `rules()`.
      */
     public function withValidator(Validator $validator): void
     {

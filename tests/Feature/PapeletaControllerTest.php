@@ -17,8 +17,8 @@ class PapeletaControllerTest extends PapeletaActionTestCase
 {
     /**
      * Próximo lunes: garantiza fecha futura y día laborable (domingo=0 es
-     * el único no laborable, ver config/papeletas.php) sin importar qué día
-     * sea "hoy" cuando corra el test.
+     * el único no laborable por defecto, ver Configuracion::diasNoLaborables())
+     * sin importar qué día sea "hoy" cuando corra el test.
      */
     private function proximoLunes(): Carbon
     {

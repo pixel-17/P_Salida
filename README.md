@@ -38,11 +38,16 @@ php artisan serve
 
 ## Configuración propia del negocio
 
-Ajustable sin tocar código, en `config/papeletas.php`:
+Ajustable sin tocar código, desde el panel de administración en `/configuracion`
+(solo rol ADMINISTRADOR):
 
 - Horario laboral permitido para solicitar salidas.
-- Días no laborables.
-- Hora límite en la que la garita puede confirmar salidas/retornos.
+- Días no laborables (activar o no el domingo como laborable).
+
+La hora límite en la que la garita puede confirmar salidas/retornos no es un
+campo aparte: se calcula automáticamente como el fin del horario laboral + 10
+minutos de cortesía (`Configuracion::horaLimiteGarita()`), para evitar
+combinaciones inconsistentes entre ambos horarios.
 
 ## Tests
 
