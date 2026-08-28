@@ -1,9 +1,11 @@
 <?php
 
-use App\Models\Papeleta;
-use Tests\Feature\Actions\PapeletaActionTestCase;
+namespace Tests\Feature;
 
-uses(PapeletaActionTestCase::class);
+use App\Models\Papeleta;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestDox;
+use Tests\Support\PapeletaActionTestCase;
 
 /**
  * El código/QR de la papeleta solo se muestra el día exactamente autorizado
@@ -12,44 +14,63 @@ uses(PapeletaActionTestCase::class);
  * miraba el estado y dejaba ver el código apenas RRHH aprobaba, sin importar
  * si la fecha autorizada todavía no llegaba.
  */
-test('el trabajador NO puede ver el código si la fecha autorizada aún no llega', function () {
-    $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
-        'fecha_salida' => now()->addDays(3)->toDateString(),
-    ]);
+class PapeletaPolicyVerCodigoTest extends PapeletaActionTestCase
+{
+    #[Test]
+    #[TestDox('el trabajador NO puede ver el código si la fecha autorizada aún no llega')]
+    public function trabajador_no_ve_codigo_antes_de_fecha_autorizada(): void
+    {
+        $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
+            'fecha_salida' => now()->addDays(3)->toDateString(),
+        ]);
 
-    expect($this->trabajador->can('verCodigo', $papeleta))->toBeFalse();
-});
+        $this->assertFalse($this->trabajador->can('verCodigo', $papeleta));
+    }
 
-test('el trabajador SÍ puede ver el código el día exacto de la fecha autorizada', function () {
-    $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
-        'fecha_salida' => now()->toDateString(),
-    ]);
+    #[Test]
+    #[TestDox('el trabajador SÍ puede ver el código el día exacto de la fecha autorizada')]
+    public function trabajador_ve_codigo_el_dia_exacto(): void
+    {
+        $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
+            'fecha_salida' => now()->toDateString(),
+        ]);
 
-    expect($this->trabajador->can('verCodigo', $papeleta))->toBeTrue();
-});
+        $this->assertTrue($this->trabajador->can('verCodigo', $papeleta));
+    }
 
-test('el trabajador NO puede ver el código si la fecha autorizada ya pasó', function () {
-    $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
-        'fecha_salida' => now()->subDays(1)->toDateString(),
-    ]);
+    #[Test]
+    #[TestDox('el trabajador NO puede ver el código si la fecha autorizada ya pasó')]
+    public function trabajador_no_ve_codigo_despues_de_fecha_autorizada(): void
+    {
+        $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
+            'fecha_salida' => now()->subDays(1)->toDateString(),
+        ]);
 
-    expect($this->trabajador->can('verCodigo', $papeleta))->toBeFalse();
-});
+        $this->assertFalse($this->trabajador->can('verCodigo', $papeleta));
+    }
 
-test('el trabajador SÍ puede ver el código para el retorno (EN_CURSO) aunque haya cruzado de fecha', function () {
-    $papeleta = $this->crearPapeleta('EN_CURSO', [
-        // La salida fue ayer (p.ej. salió tarde en la noche); el retorno no
-        // está atado a fecha_salida, igual que puede_retorno del vigilante.
-        'fecha_salida' => now()->subDays(1)->toDateString(),
-    ]);
+    #[Test]
+    #[TestDox('el trabajador SÍ puede ver el código para el retorno (EN_CURSO) aunque haya cruzado de fecha')]
+    public function trabajador_ve_codigo_en_curso_aunque_cruce_fecha(): void
+    {
+        $papeleta = $this->crearPapeleta('EN_CURSO', [
+            // La salida fue ayer (p.ej. salió tarde en la noche); el retorno
+            // no está atado a fecha_salida, igual que puede_retorno del
+            // vigilante.
+            'fecha_salida' => now()->subDays(1)->toDateString(),
+        ]);
 
-    expect($this->trabajador->can('verCodigo', $papeleta))->toBeTrue();
-});
+        $this->assertTrue($this->trabajador->can('verCodigo', $papeleta));
+    }
 
-test('otro usuario nunca puede ver el código de una papeleta ajena', function () {
-    $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
-        'fecha_salida' => now()->toDateString(),
-    ]);
+    #[Test]
+    #[TestDox('otro usuario nunca puede ver el código de una papeleta ajena')]
+    public function otro_usuario_no_ve_codigo_de_papeleta_ajena(): void
+    {
+        $papeleta = $this->crearPapeleta('APROBADO_RRHH', [
+            'fecha_salida' => now()->toDateString(),
+        ]);
 
-    expect($this->jefe->can('verCodigo', $papeleta))->toBeFalse();
-});
+        $this->assertFalse($this->jefe->can('verCodigo', $papeleta));
+    }
+}

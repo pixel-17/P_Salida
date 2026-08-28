@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Actions;
 
+use Tests\Support\PapeletaActionTestCase;
+
 use App\Actions\MarcarRetornoVigilanteAction;
 use App\Enums\TipoMarcacion;
 use Illuminate\Validation\ValidationException;
@@ -40,7 +42,12 @@ class MarcarRetornoVigilanteActionTest extends PapeletaActionTestCase
         (new MarcarRetornoVigilanteAction)->execute($papeleta, $this->vigilante);
         $papeleta->refresh();
 
-        $this->expectException(ValidationException::class);
+        // La primera marcación ya dejó la papeleta en FINALIZADO, así que la
+        // Policy (marcarComoVigilante exige APROBADO_RRHH o EN_CURSO) la
+        // bloquea antes de llegar al chequeo interno de "ya tiene retorno"
+        // — ese chequeo interno sigue vivo para la carrera concurrente, ver
+        // test_doble_marcacion_de_retorno_simultanea_no_duplica.
+        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
 
         (new MarcarRetornoVigilanteAction)->execute($papeleta, $this->vigilante);
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Actions;
+namespace Tests\Support;
 
 use App\Enums\TipoMarcacion;
 use App\Models\Area;

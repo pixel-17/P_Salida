@@ -7,7 +7,7 @@ use App\Models\Marcacion;
 use App\Models\Papeleta;
 use App\Notifications\PapeletaVencidaNotification;
 use Illuminate\Support\Facades\Notification;
-use Tests\Feature\Actions\PapeletaActionTestCase;
+use Tests\Support\PapeletaActionTestCase;
 
 /**
  * Cubre `papeletas:marcar-vencidas`. Es el comando que la request nunca

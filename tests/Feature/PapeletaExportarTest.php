@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\PapeletaController;
+use App\Http\Controllers\ReporteController;
 use App\Models\Area;
 use App\Models\Estado;
 use App\Models\Motivo;
@@ -70,7 +70,7 @@ class PapeletaExportarTest extends TestCase
         $entorno = $this->crearEntorno();
         $this->crearPapeletasEnBloque(3, $entorno);
 
-        $response = $this->actingAs($entorno['rrhh'])->get(route('papeletas.exportar', ['vista' => 'todas']));
+        $response = $this->actingAs($entorno['rrhh'])->get(route('reportes.exportar', ['vista' => 'todas']));
 
         $response->assertOk();
         $response->assertHeader(
@@ -83,15 +83,19 @@ class PapeletaExportarTest extends TestCase
     {
         $entorno = $this->crearEntorno();
 
-        $limite = (new ReflectionClass(PapeletaController::class))->getConstant('MAX_FILAS_EXPORTAR');
+        $limite = (new ReflectionClass(ReporteController::class))->getConstant('MAX_FILAS_REPORTE');
 
         $this->crearPapeletasEnBloque($limite + 1, $entorno);
 
         $this->assertSame($limite + 1, Papeleta::count());
 
-        $response = $this->actingAs($entorno['rrhh'])->get(route('papeletas.exportar', ['vista' => 'todas']));
+        // papeletasDelRango() filtra por fecha_salida dentro de
+        // desde/hasta (por defecto: mes en curso); crearPapeletasEnBloque
+        // ya deja fecha_salida = hoy, así que todas caen en rango sin
+        // pasar parámetros extra.
+        $response = $this->actingAs($entorno['rrhh'])->get(route('reportes.exportar', ['vista' => 'todas']));
 
         $response->assertRedirect();
-        $response->assertSessionHasErrors('exportar');
+        $response->assertSessionHasErrors('reporte');
     }
 }

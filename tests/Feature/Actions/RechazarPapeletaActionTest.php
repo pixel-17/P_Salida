@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Actions;
 
+use Tests\Support\PapeletaActionTestCase;
+
 use App\Actions\RechazarPapeletaAction;
 use App\Enums\RolUsuario;
 use App\Notifications\PapeletaRechazadaNotification;

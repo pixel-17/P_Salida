@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Actions;
 
+use Tests\Support\PapeletaActionTestCase;
+
 use App\Actions\MarcarSalidaVigilanteAction;
 use App\Enums\TipoMarcacion;
 use App\Models\Sede;

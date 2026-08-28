@@ -4,7 +4,7 @@ namespace Tests\Feature\Commands;
 
 use App\Notifications\PapeletaSalidaNoMarcadaNotification;
 use Illuminate\Support\Facades\Notification;
-use Tests\Feature\Actions\PapeletaActionTestCase;
+use Tests\Support\PapeletaActionTestCase;
 
 class AlertarSalidaNoMarcadaCommandTest extends PapeletaActionTestCase
 {

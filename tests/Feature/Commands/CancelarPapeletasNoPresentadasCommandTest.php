@@ -4,7 +4,8 @@ namespace Tests\Feature\Commands;
 
 use App\Notifications\PapeletaVencidaNotification;
 use Illuminate\Support\Facades\Notification;
-use Tests\Feature\Actions\PapeletaActionTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Support\PapeletaActionTestCase;
 
 /**
  * Cubre `papeletas:cancelar-no-presentadas`. Reproduce directamente el bug
@@ -30,9 +31,7 @@ class CancelarPapeletasNoPresentadasCommandTest extends PapeletaActionTestCase
         ];
     }
 
-    /**
-     * @dataProvider estadosEnTramite
-     */
+    #[DataProvider('estadosEnTramite')]
     public function test_papeleta_en_tramite_con_fecha_salida_vencida_pasa_a_vencida(string $estadoCodigo): void
     {
         Notification::fake();

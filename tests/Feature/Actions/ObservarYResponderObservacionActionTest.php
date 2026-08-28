@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Actions;
 
+use Tests\Support\PapeletaActionTestCase;
+
 use App\Actions\ObservarPapeletaAction;
 use App\Actions\ResponderObservacionAction;
 use App\Enums\TipoObservacion;
@@ -68,7 +70,11 @@ class ObservarYResponderObservacionActionTest extends PapeletaActionTestCase
 
     public function test_no_se_puede_responder_si_no_hay_observacion_pendiente(): void
     {
-        $papeleta = $this->crearPapeleta('SOLICITADO');
+        // Estado OBSERVADO a propósito (para pasar la Policy, que ya exige
+        // ese estado) pero sin ninguna fila en `observaciones`: cubre el
+        // caso de inconsistencia de datos, no el de "estado equivocado"
+        // (ese lo cubre la Policy antes, con AuthorizationException).
+        $papeleta = $this->crearPapeleta('OBSERVADO');
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 

@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Cargo;
 use App\Models\Papeleta;
 use Illuminate\Support\Carbon;
-use Tests\Feature\Actions\PapeletaActionTestCase;
+use Tests\Support\PapeletaActionTestCase;
 
 /**
  * PapeletaController no tenía test propio más allá de exportar() (ver

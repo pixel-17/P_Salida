@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Enums\TipoMarcacion;
 use App\Models\Configuracion;
 use App\Models\Marcacion;
-use Tests\Feature\Actions\PapeletaActionTestCase;
+use Tests\Support\PapeletaActionTestCase;
 
 /**
  * Cubre el bug reportado en producción: "Horas fuera" salía en negativo

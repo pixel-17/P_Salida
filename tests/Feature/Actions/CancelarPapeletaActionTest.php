@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Actions;
 
+use Tests\Support\PapeletaActionTestCase;
+
 use App\Actions\CancelarPapeletaAction;
 use App\Models\User;
 use App\Notifications\PapeletaCanceladaNotification;

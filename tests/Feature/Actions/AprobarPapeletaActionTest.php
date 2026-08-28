@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Actions;
 
+use Tests\Support\PapeletaActionTestCase;
+
 use App\Actions\AprobarPapeletaAction;
 use App\Enums\RolUsuario;
 use App\Models\FlujoAprobacion;

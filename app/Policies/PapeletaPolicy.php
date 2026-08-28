@@ -120,6 +120,13 @@ class PapeletaPolicy
             return true;
         }
 
+        // Ya presentó sustento (ver Papeleta::estadoSustento — "presentado")
+        // y nadie lo está pidiendo de nuevo vía observación: no hay motivo
+        // para dejarlo subir otro archivo.
+        if ($papeleta->adjuntos->isNotEmpty()) {
+            return false;
+        }
+
         return $papeleta->motivo->requiere_documento
             && $papeleta->estado->codigo === EstadoPapeleta::SOLICITADO->value;
     }

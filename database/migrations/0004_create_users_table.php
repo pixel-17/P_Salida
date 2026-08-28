@@ -19,6 +19,19 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            // Todo usuario creado por un Jefe o el Administrador nace con su
+            // DNI como contraseña (ver EquipoController/UserController).
+            // Este flag obliga a cambiarla la primera vez que inicia sesión;
+            // se apaga solo, una vez, al completar ese cambio (ver
+            // ForzarCambioPasswordController).
+            $table->boolean('must_change_password')->default(true);
+            // A diferencia de must_change_password (que refleja si la
+            // contraseña real sigue siendo el DNI), este flag es solo "¿ya
+            // vio el aviso alguna vez?". Se marca en true la primera vez que
+            // se muestra el modal, sin importar si el usuario acepta o
+            // cancela, y nunca se vuelve a poner en false: el aviso se
+            // muestra una única vez en la vida del usuario, no por sesión.
+            $table->boolean('aviso_password_mostrado')->default(false);
             $table->string('dni', 8)->unique();
             $table->string('telefono', 20)->nullable();
 

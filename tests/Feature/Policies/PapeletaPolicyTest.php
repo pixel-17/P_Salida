@@ -7,7 +7,7 @@ use App\Models\Adjunto;
 use App\Models\Observacion;
 use App\Models\User;
 use App\Policies\PapeletaPolicy;
-use Tests\Feature\Actions\PapeletaActionTestCase;
+use Tests\Support\PapeletaActionTestCase;
 
 /**
  * Los demás métodos de PapeletaPolicy (decidir, marcarComoVigilante,
