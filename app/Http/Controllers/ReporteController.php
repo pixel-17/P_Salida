@@ -8,6 +8,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -100,6 +103,7 @@ class ReporteController extends Controller
         ['papeletas' => $papeletas, 'desde' => $desde, 'hasta' => $hasta] = $this->papeletasDelRango($request);
 
         $spreadsheet = new Spreadsheet;
+        $subtitulo = 'Del '.$desde->format('d/m/Y').' al '.$hasta->format('d/m/Y');
 
         $this->hojaRanking(
             $spreadsheet,
@@ -108,6 +112,7 @@ class ReporteController extends Controller
             $this->rankingTrabajadores($papeletas),
             fn (array $fila) => [$fila['nombre'], $fila['area'], $fila['jefe'], $fila['total']],
             primeraHoja: true,
+            subtitulo: $subtitulo,
         );
 
         $this->hojaRanking(
@@ -116,6 +121,7 @@ class ReporteController extends Controller
             ['Área', 'Total salidas'],
             $this->rankingAreas($papeletas),
             fn (array $fila) => [$fila['nombre'], $fila['total']],
+            subtitulo: $subtitulo,
         );
 
         $this->hojaRanking(
@@ -124,6 +130,7 @@ class ReporteController extends Controller
             ['Trabajador', 'Área', 'Jefe', 'Horas fuera (garita: salida → retorno)'],
             $this->rankingHorasFuera($papeletas),
             fn (array $fila) => [$fila['nombre'], $fila['area'], $fila['jefe'], $fila['horas']],
+            subtitulo: $subtitulo,
         );
 
         $this->hojaRanking(
@@ -136,6 +143,7 @@ class ReporteController extends Controller
                 $fila['motivo_top'], $fila['motivo_top_total'], $fila['motivo_top_pct'].'%',
                 $fila['horas_fuera'], $fila['ultima_salida'],
             ],
+            subtitulo: $subtitulo,
         );
 
         $spreadsheet->setActiveSheetIndex(0);
@@ -150,9 +158,14 @@ class ReporteController extends Controller
     }
 
     /**
-     * Escribe una hoja de ranking (encabezados en negrita + filas) dentro
-     * del spreadsheet. $filaCallback convierte cada elemento de $datos en
-     * el arreglo de columnas a escribir, en el mismo orden que $encabezados.
+     * Escribe una hoja de ranking dentro del spreadsheet: fila de título con
+     * el rango de fechas (si se pasa $subtitulo), encabezado con color y
+     * panel congelado, filas de datos con franjas alternadas y bordes
+     * suaves, y autofiltro (flechas desplegables tipo Excel en cada
+     * columna, incluida "Trabajador"/nombre) sobre todo el rango — así se
+     * puede filtrar u ordenar por cualquier columna sin tocar código.
+     * $filaCallback convierte cada elemento de $datos en el arreglo de
+     * columnas a escribir, en el mismo orden que $encabezados.
      */
     private function hojaRanking(
         Spreadsheet $spreadsheet,
@@ -161,19 +174,69 @@ class ReporteController extends Controller
         Collection $datos,
         \Closure $filaCallback,
         bool $primeraHoja = false,
+        ?string $subtitulo = null,
     ): void {
         $hoja = $primeraHoja ? $spreadsheet->getActiveSheet() : $spreadsheet->createSheet();
         $hoja->setTitle($titulo);
 
-        $hoja->fromArray($encabezados, null, 'A1');
         $ultimaColumna = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($encabezados));
-        $hoja->getStyle("A1:{$ultimaColumna}1")->getFont()->setBold(true);
 
-        $fila = 2;
+        // Fila de título con el rango de fechas del reporte, para que el
+        // archivo tenga sentido por sí solo aunque se comparta suelto (sin
+        // el nombre de archivo, que sí trae la fecha, a la vista).
+        $filaEncabezado = 1;
+        if ($subtitulo) {
+            $hoja->setCellValue('A1', "{$titulo} — {$subtitulo}");
+            $hoja->mergeCells("A1:{$ultimaColumna}1");
+            $hoja->getRowDimension(1)->setRowHeight(24);
+            $hoja->getStyle('A1')->applyFromArray([
+                'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '111827']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'indent' => 1],
+            ]);
+            $filaEncabezado = 2;
+        }
+
+        $hoja->fromArray($encabezados, null, "A{$filaEncabezado}");
+        $rangoEncabezado = "A{$filaEncabezado}:{$ultimaColumna}{$filaEncabezado}";
+        $hoja->getRowDimension($filaEncabezado)->setRowHeight(20);
+        $hoja->getStyle($rangoEncabezado)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '2563EB']],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+        ]);
+
+        $filaInicioDatos = $filaEncabezado + 1;
+        $fila = $filaInicioDatos;
         foreach ($datos as $item) {
             $hoja->fromArray($filaCallback($item), null, "A{$fila}");
             $fila++;
         }
+        $filaFinDatos = $fila - 1;
+
+        if ($filaFinDatos >= $filaInicioDatos) {
+            $rangoDatos = "A{$filaInicioDatos}:{$ultimaColumna}{$filaFinDatos}";
+            $hoja->getStyle($rangoDatos)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E5E7EB']]],
+            ]);
+
+            // Franjas alternadas (zebra) para que la fila se pueda seguir
+            // con la vista en tablas largas.
+            for ($f = $filaInicioDatos; $f <= $filaFinDatos; $f++) {
+                if (($f - $filaInicioDatos) % 2 === 1) {
+                    $hoja->getStyle("A{$f}:{$ultimaColumna}{$f}")
+                        ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F3F4F6');
+                }
+            }
+        }
+
+        // Autofiltro: agrega las flechas desplegables de Excel en cada
+        // encabezado (Trabajador, Área, Jefe, etc.) para filtrar/ordenar
+        // sin escribir fórmulas ni tocar la tabla dinámica de origen.
+        $hoja->setAutoFilter("A{$filaEncabezado}:{$ultimaColumna}".max($filaFinDatos, $filaEncabezado));
+
+        // Encabezado siempre visible al bajar por filas largas.
+        $hoja->freezePane("A{$filaInicioDatos}");
 
         foreach (range('A', $ultimaColumna) as $columna) {
             $hoja->getColumnDimension($columna)->setAutoSize(true);
@@ -293,7 +356,10 @@ class ReporteController extends Controller
                         return 0;
                     }
 
-                    return $salida->created_at->diffInSeconds($fin);
+                    // $absolute=true: ver nota en Papeleta::horasFuera() —
+                    // Carbon 3 devuelve diferencia con signo por defecto y
+                    // "horas fuera" nunca debe ser negativo.
+                    return $salida->created_at->diffInSeconds($fin, true);
                 });
 
                 $total = $grupo->count();
@@ -353,7 +419,8 @@ class ReporteController extends Controller
                     $salida = $papeleta->marcaciones->firstWhere('tipo', 'SALIDA');
                     $fin = $papeleta->finEfectivoParaHoras();
 
-                    return $fin ? $salida->created_at->diffInSeconds($fin) : 0;
+                    // $absolute=true: ver nota en Papeleta::horasFuera().
+                    return $fin ? $salida->created_at->diffInSeconds($fin, true) : 0;
                 });
 
                 return [
@@ -407,7 +474,8 @@ class ReporteController extends Controller
                     $salida = $papeleta->marcaciones->firstWhere('tipo', 'SALIDA');
                     $retorno = $papeleta->marcaciones->firstWhere('tipo', 'RETORNO');
 
-                    return $salida->created_at->diffInHours($retorno->created_at);
+                    // $absolute=true: ver nota en Papeleta::horasFuera().
+                    return $salida->created_at->diffInHours($retorno->created_at, true);
                 });
 
                 return [

@@ -47,14 +47,10 @@ Route::middleware(['auth'])->group(function () {
     // ---------- Papeletas: accesible a los 3 roles, filtrado por Policy/scope ----------
     Route::get('/papeletas', [PapeletaController::class, 'index'])->name('papeletas.index');
 
-    // ---------- Exportación a Excel/PDF: solo RRHH. Throttle porque cada
-    // descarga arma el archivo completo en memoria (hasta MAX_FILAS_EXPORTAR
-    // filas) — sin límite, un clic repetido o un script podría tumbar el
-    // proceso PHP con exportaciones simultáneas. ----------
-    Route::middleware(['role:RRHH', 'throttle:10,1'])->group(function () {
-        Route::get('/papeletas/exportar', [PapeletaController::class, 'exportar'])->name('papeletas.exportar');
-        Route::get('/papeletas/exportar/pdf', [PapeletaController::class, 'pdfReporte'])->name('papeletas.exportar-pdf');
-    });
+    // Nota: la exportación cruda de papeletas (Excel/PDF por fila) desde
+    // esta bandeja se eliminó — quedó redundante con /reportes, que ya
+    // exporta a Excel con los mismos filtros y datos agregados
+    // (ver ReporteController::exportar).
 
     Route::get('/papeletas/crear', [PapeletaController::class, 'create'])->name('papeletas.create');
     Route::post('/papeletas', [PapeletaController::class, 'store'])->name('papeletas.store');

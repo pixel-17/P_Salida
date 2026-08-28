@@ -50,11 +50,23 @@ return new class extends Migration
         });
 
         // Blueprint no expone check() nativo en todas las versiones; se agrega vía SQL crudo.
-        DB::statement('
-            ALTER TABLE papeletas
-            ADD CONSTRAINT chk_retorno_posterior
-            CHECK (hora_retorno_programada IS NULL OR hora_retorno_programada > hora_salida_programada)
-        ');
+        //
+        // SQLite (usado en los tests, ver phpunit.xml) nunca soportó
+        // "ALTER TABLE ADD CONSTRAINT" — un CHECK ahí solo se puede definir
+        // dentro del CREATE TABLE original. Se salta en ese driver: la
+        // regla real ya la aplica StorePapeletaRequest
+        // ('hora_retorno_programada' => ['after:hora_salida_programada']),
+        // así que en tests sigue estando cubierta a nivel de aplicación —
+        // este CHECK es una segunda capa de defensa en la base de datos
+        // (MySQL/Postgres en producción) contra inserts que se salten la
+        // validación de la app.
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('
+                ALTER TABLE papeletas
+                ADD CONSTRAINT chk_retorno_posterior
+                CHECK (hora_retorno_programada IS NULL OR hora_retorno_programada > hora_salida_programada)
+            ');
+        }
     }
 
     public function down(): void

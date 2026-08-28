@@ -7,9 +7,9 @@ use App\Models\HistorialPapeleta;
 use Illuminate\Support\Collection;
 
 /**
- * Cálculos que antes vivían solo dentro de PapeletaController::pdfReporte()
- * y que ahora también usa AdminDashboardController. Se centralizan acá
- * para no duplicar la lógica del promedio de aprobación en dos sitios.
+ * Cálculos de estadísticas usados por AdminDashboardController. Se
+ * centralizan acá para no duplicar la lógica del promedio de aprobación
+ * en varios sitios.
  */
 class PapeletaEstadisticas
 {
@@ -36,7 +36,7 @@ class PapeletaEstadisticas
 
         $segundos = $eventos
             ->filter(fn ($evento) => $evento->papeleta !== null)
-            ->map(fn ($evento) => $evento->papeleta->created_at->diffInSeconds($evento->created_at));
+            ->map(fn ($evento) => $evento->papeleta->created_at->diffInSeconds($evento->created_at, true));
 
         if ($segundos->isEmpty()) {
             return '—';

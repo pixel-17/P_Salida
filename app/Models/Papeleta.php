@@ -155,7 +155,7 @@ class Papeleta extends Model
             return 0;
         }
 
-        $transcurridos = $this->updated_at->diffInSeconds(now());
+        $transcurridos = $this->updated_at->diffInSeconds(now(), true);
 
         return max(0, self::COOLDOWN_CODIGO_SEGUNDOS - $transcurridos);
     }
@@ -275,6 +275,14 @@ class Papeleta extends Model
      * de detalle, exportación); los rankings que SUMAN horas de muchas
      * papeletas siguen trabajando con finEfectivoParaHoras() directo para
      * no perder precisión al redondear antes de sumar.
+     *
+     * diffInMinutes() con $absolute=true a propósito: desde Carbon 3 estos
+     * métodos devuelven diferencia CON signo por defecto (antes siempre
+     * era positiva). "Horas fuera" nunca puede ser negativo por
+     * definición, así que se fuerza el valor absoluto explícitamente —
+     * sin esto, un caso raro (p.ej. la marcación de salida real cae
+     * después del cierre de garita usado como tope, ver
+     * finEfectivoParaHoras()) mostraba horas negativas sin sentido.
      */
     public function horasFuera(): ?float
     {
@@ -285,7 +293,7 @@ class Papeleta extends Model
             return null;
         }
 
-        return round($marcSalida->created_at->diffInMinutes($fin) / 60, 1);
+        return round($marcSalida->created_at->diffInMinutes($fin, true) / 60, 1);
     }
 
     // ---------- Scopes para bandejas por rol ----------

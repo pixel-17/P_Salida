@@ -20,14 +20,16 @@ Artisan::command('inspire', function () {
  * config/logging.php) en cuanto LOG_STACK lo incluya en el .env de
  * producción.
  */
-function conAlertaSiFalla(\Illuminate\Console\Scheduling\Event $evento, string $comando): \Illuminate\Console\Scheduling\Event
-{
-    return $evento->onFailure(function () use ($comando) {
-        Log::critical("Comando programado falló: {$comando}", [
-            'comando' => $comando,
-            'hora' => now()->toDateTimeString(),
-        ]);
-    });
+if (! function_exists('conAlertaSiFalla')) {
+    function conAlertaSiFalla(\Illuminate\Console\Scheduling\Event $evento, string $comando): \Illuminate\Console\Scheduling\Event
+    {
+        return $evento->onFailure(function () use ($comando) {
+            Log::critical("Comando programado falló: {$comando}", [
+                'comando' => $comando,
+                'hora' => now()->toDateTimeString(),
+            ]);
+        });
+    }
 }
 
 // Sin esto, EN_CURSO nunca pasa a VENCIDA automáticamente: el comando

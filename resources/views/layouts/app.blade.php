@@ -104,7 +104,6 @@
                         'items' => [
                             ['label' => 'Reportes', 'route' => route('reportes.index'), 'active' => 'reportes.*', 'icon' => 'chart'],
                             ['label' => 'Sustentos', 'route' => route('sustentos.index'), 'active' => 'sustentos.*', 'icon' => 'clipboard'],
-                            ['label' => 'Exportar a CSV', 'route' => route('papeletas.exportar'), 'active' => 'papeletas.exportar', 'icon' => 'download'],
                         ],
                     ],
                 ];
