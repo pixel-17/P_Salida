@@ -69,7 +69,7 @@ class ReporteExcelExporter
         $filaInicioDatos = $filaEncabezado + 1;
         $fila = $filaInicioDatos;
         foreach ($datos as $item) {
-            $hoja->fromArray($filaCallback($item), null, "A{$fila}");
+            $hoja->fromArray(self::sanitizarFila($filaCallback($item)), null, "A{$fila}");
             $fila++;
         }
         $filaFinDatos = $fila - 1;
@@ -101,5 +101,30 @@ class ReporteExcelExporter
         foreach (range('A', $ultimaColumna) as $columna) {
             $hoja->getColumnDimension($columna)->setAutoSize(true);
         }
+    }
+
+    /**
+     * Defensa contra "fórmula injection" (CSV/Excel Injection): si una
+     * celda de texto empieza con =, +, -, @ o un tab/retorno de carro,
+     * Excel/Sheets la interpreta como fórmula al abrir el archivo, no
+     * como texto literal. Los valores que llegan aquí (nombre de
+     * trabajador, área, motivo, destino) los ingresa el propio staff al
+     * crear usuarios/catálogos — ver UserController/EquipoController —,
+     * así que el vector real es "un compañero con nombre raro", no un
+     * atacante externo anónimo; aun así, es una defensa barata que
+     * conviene tener antes de que el archivo se comparta fuera del
+     * sistema. Se antepone un apóstrofo para forzar texto plano, igual
+     * que Excel hace internamente cuando uno mismo pega ese valor a mano
+     * en una celda con formato texto.
+     */
+    private static function sanitizarFila(array $fila): array
+    {
+        return array_map(function ($valor) {
+            if (is_string($valor) && $valor !== '' && in_array($valor[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+                return "'".$valor;
+            }
+
+            return $valor;
+        }, $fila);
     }
 }
