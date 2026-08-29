@@ -13,6 +13,7 @@ class Adjunto extends Model
 
     protected $fillable = ['papeleta_id', 'observacion_id', 'nombre_original', 'archivo', 'extension', 'peso'];
 
+    /** @return BelongsTo<Papeleta, $this> */
     public function papeleta(): BelongsTo
     {
         return $this->belongsTo(Papeleta::class);
@@ -24,6 +25,7 @@ class Adjunto extends Model
      * ese caso el adjunto queda como evidencia y no se puede eliminar,
      * ver PapeletaPolicy::eliminarAdjunto.
      */
+    /** @return BelongsTo<Observacion, $this> */
     public function observacion(): BelongsTo
     {
         return $this->belongsTo(Observacion::class);

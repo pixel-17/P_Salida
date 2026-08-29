@@ -40,8 +40,9 @@ class ReporteSalidasCalculator
         return $papeletas
             ->groupBy('trabajador_id')
             ->map(fn (Collection $grupo) => [
-                'nombre' => $grupo->first()->trabajador?->name ?? 'Sin nombre',
-                'area' => $grupo->first()->area?->nombre ?? '—',
+                'nombre' => $grupo->first()->trabajador->name ?? 'Sin nombre',
+                'area' => $grupo->first()->area->nombre ?? '—',
+                // @phpstan-ignore nullsafe.neverNull (jefe_id SÍ es nullable en la migración de papeletas; Larastan no modela la nulabilidad real del FK para relaciones BelongsTo y marca esto como falso positivo — quitar el ?-> aquí introduciría un null pointer real)
                 'jefe' => $grupo->first()->jefe?->name ?? '—',
                 'total' => $grupo->count(),
             ])
@@ -66,7 +67,7 @@ class ReporteSalidasCalculator
             ->groupBy('trabajador_id')
             ->map(function (Collection $grupo) {
                 $motivoTop = $grupo
-                    ->groupBy(fn (Papeleta $p) => $p->motivo?->nombre ?? 'Sin motivo')
+                    ->groupBy(fn (Papeleta $p) => $p->motivo->nombre)
                     ->map->count()
                     ->sortDesc();
 
@@ -88,8 +89,9 @@ class ReporteSalidasCalculator
                 $motivoTopTotal = $motivoTop->first() ?? 0;
 
                 return [
-                    'nombre' => $grupo->first()->trabajador?->name ?? 'Sin nombre',
-                    'area' => $grupo->first()->area?->nombre ?? '—',
+                    'nombre' => $grupo->first()->trabajador->name ?? 'Sin nombre',
+                    'area' => $grupo->first()->area->nombre ?? '—',
+                    // @phpstan-ignore nullsafe.neverNull (jefe_id SÍ es nullable en la migración de papeletas; Larastan no modela la nulabilidad real del FK para relaciones BelongsTo y marca esto como falso positivo — quitar el ?-> aquí introduciría un null pointer real)
                     'jefe' => $grupo->first()->jefe?->name ?? '—',
                     'total' => $total,
                     'motivo_top' => $motivoTop->keys()->first() ?? '—',
@@ -112,7 +114,7 @@ class ReporteSalidasCalculator
         return $papeletas
             ->groupBy('area_id')
             ->map(fn (Collection $grupo) => [
-                'nombre' => $grupo->first()->area?->nombre ?? 'Sin área',
+                'nombre' => $grupo->first()->area->nombre ?? 'Sin área',
                 'total' => $grupo->count(),
             ])
             ->sortByDesc('total')
@@ -146,8 +148,9 @@ class ReporteSalidasCalculator
                 });
 
                 return [
-                    'nombre' => $grupo->first()->trabajador?->name ?? 'Sin nombre',
-                    'area' => $grupo->first()->area?->nombre ?? '—',
+                    'nombre' => $grupo->first()->trabajador->name ?? 'Sin nombre',
+                    'area' => $grupo->first()->area->nombre ?? '—',
+                    // @phpstan-ignore nullsafe.neverNull (jefe_id SÍ es nullable en la migración de papeletas; Larastan no modela la nulabilidad real del FK para relaciones BelongsTo y marca esto como falso positivo — quitar el ?-> aquí introduciría un null pointer real)
                     'jefe' => $grupo->first()->jefe?->name ?? '—',
                     'horas' => round($segundos / 3600, 1),
                 ];
@@ -165,7 +168,7 @@ class ReporteSalidasCalculator
         return $papeletas
             ->groupBy('motivo_id')
             ->map(fn (Collection $grupo) => [
-                'nombre' => $grupo->first()->motivo?->nombre ?? 'Sin motivo',
+                'nombre' => $grupo->first()->motivo->nombre ?? 'Sin motivo',
                 'total' => $grupo->count(),
             ])
             ->sortByDesc('total')
@@ -201,7 +204,7 @@ class ReporteSalidasCalculator
                 });
 
                 return [
-                    'nombre' => $grupo->first()->motivo?->nombre ?? 'Sin motivo',
+                    'nombre' => $grupo->first()->motivo->nombre ?? 'Sin motivo',
                     'salidas_contabilizadas' => $grupo->count(),
                     'horas' => round($horas, 1),
                 ];

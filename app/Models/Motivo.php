@@ -21,6 +21,7 @@ class Motivo extends Model
         'estado' => 'boolean',
     ];
 
+    /** @return HasMany<Papeleta, $this> */
     public function papeletas(): HasMany
     {
         return $this->hasMany(Papeleta::class);

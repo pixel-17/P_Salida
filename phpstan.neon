@@ -9,3 +9,14 @@ parameters:
 
     checkOctaneCompatibility: false
     checkModelProperties: true
+
+    ignoreErrors:
+        # Larastan exige que las keys del array coincidan con el union type
+        # exacto de propiedades fillable del modelo. En la práctica los
+        # arrays vienen de $request->validate()/validated() o de un método
+        # privado de validación local (ver *Controller::validarDatos()) —
+        # Eloquent ya valida $fillable en runtime, así que este chequeo
+        # solo genera fricción sin aportar seguridad real.
+        -
+            message: '#Parameter \#1 \$attributes of (static )?method Illuminate\\Database\\Eloquent\\(Builder|Model)(<[^>]+>)?::(create|update)\(\) expects array<model property of .+, mixed>, array(<string, mixed>)? given\.#'
+            identifier: argument.type

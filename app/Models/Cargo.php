@@ -20,11 +20,13 @@ class Cargo extends Model
         'estado' => 'boolean',
     ];
 
+    /** @return BelongsTo<Area, $this> */
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class);
     }
 
+    /** @return HasMany<User, $this> */
     public function usuarios(): HasMany
     {
         return $this->hasMany(User::class);

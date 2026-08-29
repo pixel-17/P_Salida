@@ -23,11 +23,13 @@ class NotificacionSistema extends Model
         'leida_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Papeleta, $this> */
     public function papeleta(): BelongsTo
     {
         return $this->belongsTo(Papeleta::class);

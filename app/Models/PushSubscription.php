@@ -20,6 +20,7 @@ class PushSubscription extends Model
         'activo' => 'boolean',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

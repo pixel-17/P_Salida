@@ -29,61 +29,73 @@ class Papeleta extends Model
 
     // ---------- Relaciones ----------
 
+    /** @return BelongsTo<User, $this> */
     public function trabajador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'trabajador_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function jefe(): BelongsTo
     {
         return $this->belongsTo(User::class, 'jefe_id');
     }
 
+    /** @return BelongsTo<Area, $this> */
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class);
     }
 
+    /** @return BelongsTo<Sede, $this> */
     public function sede(): BelongsTo
     {
         return $this->belongsTo(Sede::class);
     }
 
+    /** @return BelongsTo<Motivo, $this> */
     public function motivo(): BelongsTo
     {
         return $this->belongsTo(Motivo::class);
     }
 
+    /** @return BelongsTo<Estado, $this> */
     public function estado(): BelongsTo
     {
         return $this->belongsTo(Estado::class);
     }
 
+    /** @return HasMany<Marcacion, $this> */
     public function marcaciones(): HasMany
     {
         return $this->hasMany(Marcacion::class);
     }
 
+    /** @return HasMany<FlujoAprobacion, $this> */
     public function flujoAprobaciones(): HasMany
     {
         return $this->hasMany(FlujoAprobacion::class);
     }
 
+    /** @return HasMany<Observacion, $this> */
     public function observaciones(): HasMany
     {
         return $this->hasMany(Observacion::class);
     }
 
+    /** @return HasMany<Adjunto, $this> */
     public function adjuntos(): HasMany
     {
         return $this->hasMany(Adjunto::class);
     }
 
+    /** @return HasMany<HistorialPapeleta, $this> */
     public function historial(): HasMany
     {
         return $this->hasMany(HistorialPapeleta::class);
     }
 
+    /** @return HasMany<NotificacionSistema, $this> */
     public function notificaciones(): HasMany
     {
         return $this->hasMany(NotificacionSistema::class);
@@ -226,6 +238,7 @@ class Papeleta extends Model
         return ['codigo' => 'aceptado', 'label' => 'Subsanado', 'color' => 'green'];
     }
 
+    /** @return HasMany<Observacion, $this> */
     public function observacionesJustificacion(): HasMany
     {
         return $this->hasMany(Observacion::class)

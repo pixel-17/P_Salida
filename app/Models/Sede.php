@@ -21,11 +21,13 @@ class Sede extends Model
         'estado' => 'boolean',
     ];
 
+    /** @return HasMany<User, $this> */
     public function usuarios(): HasMany
     {
         return $this->hasMany(User::class);
     }
 
+    /** @return HasMany<Papeleta, $this> */
     public function papeletas(): HasMany
     {
         return $this->hasMany(Papeleta::class);

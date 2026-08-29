@@ -1,0 +1,584 @@
+diff --git a/app/Http/Controllers/Auth/VerifyEmailController.php b/app/Http/Controllers/Auth/VerifyEmailController.php
+index 784765e..88b8b8c 100644
+--- a/app/Http/Controllers/Auth/VerifyEmailController.php
++++ b/app/Http/Controllers/Auth/VerifyEmailController.php
+@@ -14,12 +14,20 @@ class VerifyEmailController extends Controller
+      */
+     public function __invoke(EmailVerificationRequest $request): RedirectResponse
+     {
+-        if ($request->user()->hasVerifiedEmail()) {
++        // EmailVerificationRequest::user() se declara Authenticatable|null a
++        // nivel de framework, pero el middleware 'auth' de la ruta garantiza
++        // que siempre hay un User autenticado aquí. Se estrecha el tipo
++        // explícitamente para que Larastan sepa que implementa
++        // MustVerifyEmail (lo exige el evento Verified) y no es nullable.
++        /** @var \App\Models\User $user */
++        $user = $request->user();
++
++        if ($user->hasVerifiedEmail()) {
+             return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+         }
+ 
+-        if ($request->user()->markEmailAsVerified()) {
+-            event(new Verified($request->user()));
++        if ($user->markEmailAsVerified()) {
++            event(new Verified($user));
+         }
+ 
+         return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+diff --git a/app/Http/Controllers/PapeletaController.php b/app/Http/Controllers/PapeletaController.php
+index b52fda3..e1af038 100644
+--- a/app/Http/Controllers/PapeletaController.php
++++ b/app/Http/Controllers/PapeletaController.php
+@@ -17,7 +17,7 @@
+ 
+ class PapeletaController extends Controller
+ {
+-    public function index(Request $request): View
++    public function index(Request $request): View|JsonResponse
+     {
+         $user = $request->user();
+ 
+diff --git a/app/Models/Adjunto.php b/app/Models/Adjunto.php
+index 833fbde..789d911 100644
+--- a/app/Models/Adjunto.php
++++ b/app/Models/Adjunto.php
+@@ -13,6 +13,7 @@ class Adjunto extends Model
+ 
+     protected $fillable = ['papeleta_id', 'observacion_id', 'nombre_original', 'archivo', 'extension', 'peso'];
+ 
++    /** @return BelongsTo<Papeleta, $this> */
+     public function papeleta(): BelongsTo
+     {
+         return $this->belongsTo(Papeleta::class);
+@@ -24,6 +25,7 @@ public function papeleta(): BelongsTo
+      * ese caso el adjunto queda como evidencia y no se puede eliminar,
+      * ver PapeletaPolicy::eliminarAdjunto.
+      */
++    /** @return BelongsTo<Observacion, $this> */
+     public function observacion(): BelongsTo
+     {
+         return $this->belongsTo(Observacion::class);
+diff --git a/app/Models/Area.php b/app/Models/Area.php
+index 834c947..df9223f 100644
+--- a/app/Models/Area.php
++++ b/app/Models/Area.php
+@@ -17,11 +17,13 @@ class Area extends Model
+         'estado' => 'boolean',
+     ];
+ 
++    /** @return HasMany<Cargo, $this> */
+     public function cargos(): HasMany
+     {
+         return $this->hasMany(Cargo::class);
+     }
+ 
++    /** @return HasMany<Papeleta, $this> */
+     public function papeletas(): HasMany
+     {
+         return $this->hasMany(Papeleta::class);
+diff --git a/app/Models/AuditLog.php b/app/Models/AuditLog.php
+index 73b4532..1647ffc 100644
+--- a/app/Models/AuditLog.php
++++ b/app/Models/AuditLog.php
+@@ -20,6 +20,7 @@ class AuditLog extends Model
+         'created_at' => 'datetime',
+     ];
+ 
++    /** @return BelongsTo<User, $this> */
+     public function usuario(): BelongsTo
+     {
+         return $this->belongsTo(User::class, 'user_id');
+diff --git a/app/Models/Cargo.php b/app/Models/Cargo.php
+index 78e541c..2235a6d 100644
+--- a/app/Models/Cargo.php
++++ b/app/Models/Cargo.php
+@@ -20,11 +20,13 @@ class Cargo extends Model
+         'estado' => 'boolean',
+     ];
+ 
++    /** @return BelongsTo<Area, $this> */
+     public function area(): BelongsTo
+     {
+         return $this->belongsTo(Area::class);
+     }
+ 
++    /** @return HasMany<User, $this> */
+     public function usuarios(): HasMany
+     {
+         return $this->hasMany(User::class);
+diff --git a/app/Models/Estado.php b/app/Models/Estado.php
+index de867ad..6d8db75 100644
+--- a/app/Models/Estado.php
++++ b/app/Models/Estado.php
+@@ -12,6 +12,7 @@ class Estado extends Model
+ 
+     protected $fillable = ['codigo', 'nombre', 'color', 'orden'];
+ 
++    /** @return HasMany<Papeleta, $this> */
+     public function papeletas(): HasMany
+     {
+         return $this->hasMany(Papeleta::class);
+diff --git a/app/Models/FlujoAprobacion.php b/app/Models/FlujoAprobacion.php
+index bfca5bd..8af75fc 100644
+--- a/app/Models/FlujoAprobacion.php
++++ b/app/Models/FlujoAprobacion.php
+@@ -21,11 +21,13 @@ class FlujoAprobacion extends Model
+         'accion' => AccionFlujo::class,
+     ];
+ 
++    /** @return BelongsTo<Papeleta, $this> */
+     public function papeleta(): BelongsTo
+     {
+         return $this->belongsTo(Papeleta::class);
+     }
+ 
++    /** @return BelongsTo<User, $this> */
+     public function usuario(): BelongsTo
+     {
+         return $this->belongsTo(User::class, 'usuario_id');
+diff --git a/app/Models/HistorialPapeleta.php b/app/Models/HistorialPapeleta.php
+index 7522fb7..9f4a2fb 100644
+--- a/app/Models/HistorialPapeleta.php
++++ b/app/Models/HistorialPapeleta.php
+@@ -16,21 +16,25 @@ class HistorialPapeleta extends Model
+         'papeleta_id', 'usuario_id', 'accion', 'estado_anterior_id', 'estado_nuevo_id', 'descripcion',
+     ];
+ 
++    /** @return BelongsTo<Papeleta, $this> */
+     public function papeleta(): BelongsTo
+     {
+         return $this->belongsTo(Papeleta::class);
+     }
+ 
++    /** @return BelongsTo<User, $this> */
+     public function usuario(): BelongsTo
+     {
+         return $this->belongsTo(User::class, 'usuario_id');
+     }
+ 
++    /** @return BelongsTo<Estado, $this> */
+     public function estadoAnterior(): BelongsTo
+     {
+         return $this->belongsTo(Estado::class, 'estado_anterior_id');
+     }
+ 
++    /** @return BelongsTo<Estado, $this> */
+     public function estadoNuevo(): BelongsTo
+     {
+         return $this->belongsTo(Estado::class, 'estado_nuevo_id');
+diff --git a/app/Models/Marcacion.php b/app/Models/Marcacion.php
+index acd0877..5f93457 100644
+--- a/app/Models/Marcacion.php
++++ b/app/Models/Marcacion.php
+@@ -7,6 +7,14 @@
+ use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Database\Eloquent\Relations\BelongsTo;
+ 
++// @property explícito: sin esto, Larastan infiere created_at como
++// Carbon\Carbon (tipo base de doctrine/dbal) en vez de
++// Illuminate\Support\Carbon (el que Eloquent realmente instancia vía el
++// cast 'datetime'), y rompe el tipo de retorno declarado en cualquier
++// método que reenvíe este valor (ver Papeleta::finEfectivoParaHoras()).
++/**
++ * @property \Illuminate\Support\Carbon $created_at
++ */
+ class Marcacion extends Model
+ {
+     use HasFactory;
+@@ -21,13 +29,16 @@ class Marcacion extends Model
+ 
+     protected $casts = [
+         'tipo' => TipoMarcacion::class,
++        'created_at' => 'datetime',
+     ];
+ 
++    /** @return BelongsTo<Papeleta, $this> */
+     public function papeleta(): BelongsTo
+     {
+         return $this->belongsTo(Papeleta::class);
+     }
+ 
++    /** @return BelongsTo<User, $this> */
+     public function registradoPor(): BelongsTo
+     {
+         return $this->belongsTo(User::class, 'registrado_por_user_id');
+diff --git a/app/Models/Motivo.php b/app/Models/Motivo.php
+index ccd5b77..a2494f5 100644
+--- a/app/Models/Motivo.php
++++ b/app/Models/Motivo.php
+@@ -21,6 +21,7 @@ class Motivo extends Model
+         'estado' => 'boolean',
+     ];
+ 
++    /** @return HasMany<Papeleta, $this> */
+     public function papeletas(): HasMany
+     {
+         return $this->hasMany(Papeleta::class);
+diff --git a/app/Models/NotificacionSistema.php b/app/Models/NotificacionSistema.php
+index 138fd7f..3bef8b2 100644
+--- a/app/Models/NotificacionSistema.php
++++ b/app/Models/NotificacionSistema.php
+@@ -23,11 +23,13 @@ class NotificacionSistema extends Model
+         'leida_at' => 'datetime',
+     ];
+ 
++    /** @return BelongsTo<User, $this> */
+     public function user(): BelongsTo
+     {
+         return $this->belongsTo(User::class);
+     }
+ 
++    /** @return BelongsTo<Papeleta, $this> */
+     public function papeleta(): BelongsTo
+     {
+         return $this->belongsTo(Papeleta::class);
+diff --git a/app/Models/Observacion.php b/app/Models/Observacion.php
+index a6c4816..b413f23 100644
+--- a/app/Models/Observacion.php
++++ b/app/Models/Observacion.php
+@@ -21,11 +21,13 @@ class Observacion extends Model
+         'atendida' => 'boolean',
+     ];
+ 
++    /** @return BelongsTo<Papeleta, $this> */
+     public function papeleta(): BelongsTo
+     {
+         return $this->belongsTo(Papeleta::class);
+     }
+ 
++    /** @return BelongsTo<User, $this> */
+     public function usuario(): BelongsTo
+     {
+         return $this->belongsTo(User::class, 'usuario_id');
+@@ -38,6 +40,7 @@ public function usuario(): BelongsTo
+      * reporte de sustentos para mostrar QUÉ documento respondió cada
+      * solicitud, no solo si la papeleta tiene adjuntos en general.
+      */
++    /** @return HasMany<Adjunto, $this> */
+     public function adjuntos(): HasMany
+     {
+         return $this->hasMany(Adjunto::class);
+diff --git a/app/Models/Papeleta.php b/app/Models/Papeleta.php
+index 64d4145..a800c7b 100644
+--- a/app/Models/Papeleta.php
++++ b/app/Models/Papeleta.php
+@@ -29,61 +29,73 @@ class Papeleta extends Model
+ 
+     // ---------- Relaciones ----------
+ 
++    /** @return BelongsTo<User, $this> */
+     public function trabajador(): BelongsTo
+     {
+         return $this->belongsTo(User::class, 'trabajador_id');
+     }
+ 
++    /** @return BelongsTo<User, $this> */
+     public function jefe(): BelongsTo
+     {
+         return $this->belongsTo(User::class, 'jefe_id');
+     }
+ 
++    /** @return BelongsTo<Area, $this> */
+     public function area(): BelongsTo
+     {
+         return $this->belongsTo(Area::class);
+     }
+ 
++    /** @return BelongsTo<Sede, $this> */
+     public function sede(): BelongsTo
+     {
+         return $this->belongsTo(Sede::class);
+     }
+ 
++    /** @return BelongsTo<Motivo, $this> */
+     public function motivo(): BelongsTo
+     {
+         return $this->belongsTo(Motivo::class);
+     }
+ 
++    /** @return BelongsTo<Estado, $this> */
+     public function estado(): BelongsTo
+     {
+         return $this->belongsTo(Estado::class);
+     }
+ 
++    /** @return HasMany<Marcacion, $this> */
+     public function marcaciones(): HasMany
+     {
+         return $this->hasMany(Marcacion::class);
+     }
+ 
++    /** @return HasMany<FlujoAprobacion, $this> */
+     public function flujoAprobaciones(): HasMany
+     {
+         return $this->hasMany(FlujoAprobacion::class);
+     }
+ 
++    /** @return HasMany<Observacion, $this> */
+     public function observaciones(): HasMany
+     {
+         return $this->hasMany(Observacion::class);
+     }
+ 
++    /** @return HasMany<Adjunto, $this> */
+     public function adjuntos(): HasMany
+     {
+         return $this->hasMany(Adjunto::class);
+     }
+ 
++    /** @return HasMany<HistorialPapeleta, $this> */
+     public function historial(): HasMany
+     {
+         return $this->hasMany(HistorialPapeleta::class);
+     }
+ 
++    /** @return HasMany<NotificacionSistema, $this> */
+     public function notificaciones(): HasMany
+     {
+         return $this->hasMany(NotificacionSistema::class);
+@@ -226,6 +238,7 @@ public function estadoSustento(): array
+         return ['codigo' => 'aceptado', 'label' => 'Subsanado', 'color' => 'green'];
+     }
+ 
++    /** @return HasMany<Observacion, $this> */
+     public function observacionesJustificacion(): HasMany
+     {
+         return $this->hasMany(Observacion::class)
+diff --git a/app/Models/PushSubscription.php b/app/Models/PushSubscription.php
+index e0e0479..a77b94e 100644
+--- a/app/Models/PushSubscription.php
++++ b/app/Models/PushSubscription.php
+@@ -20,6 +20,7 @@ class PushSubscription extends Model
+         'activo' => 'boolean',
+     ];
+ 
++    /** @return BelongsTo<User, $this> */
+     public function user(): BelongsTo
+     {
+         return $this->belongsTo(User::class);
+diff --git a/app/Models/Sede.php b/app/Models/Sede.php
+index 3f82d82..8f3a3d3 100644
+--- a/app/Models/Sede.php
++++ b/app/Models/Sede.php
+@@ -21,11 +21,13 @@ class Sede extends Model
+         'estado' => 'boolean',
+     ];
+ 
++    /** @return HasMany<User, $this> */
+     public function usuarios(): HasMany
+     {
+         return $this->hasMany(User::class);
+     }
+ 
++    /** @return HasMany<Papeleta, $this> */
+     public function papeletas(): HasMany
+     {
+         return $this->hasMany(Papeleta::class);
+diff --git a/app/Models/User.php b/app/Models/User.php
+index 64caa99..92abcfa 100644
+--- a/app/Models/User.php
++++ b/app/Models/User.php
+@@ -4,6 +4,8 @@
+ 
+ use App\Concerns\Auditable;
+ use App\Enums\RolUsuario;
++use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
++use Illuminate\Contracts\Auth\MustVerifyEmail;
+ use Illuminate\Database\Eloquent\Factories\HasFactory;
+ use Illuminate\Database\Eloquent\Relations\BelongsTo;
+ use Illuminate\Database\Eloquent\Relations\HasMany;
+@@ -12,9 +14,14 @@
+ use Illuminate\Notifications\Notifiable;
+ use Spatie\Permission\Traits\HasRoles;
+ 
+-class User extends Authenticatable
++// Implementa MustVerifyEmail: VerifyEmailController llama
++// hasVerifiedEmail()/markEmailAsVerified(), que solo existen si el modelo
++// implementa esta interfaz (más el trait). Sin esto el flujo de
++// verificación de correo falla con error fatal en runtime, no es un
++// hallazgo únicamente de PHPStan.
++class User extends Authenticatable implements MustVerifyEmail
+ {
+-    use Auditable, HasFactory, HasRoles, Notifiable, SoftDeletes;
++    use Auditable, HasFactory, HasRoles, MustVerifyEmailTrait, Notifiable, SoftDeletes;
+ 
+     protected $fillable = [
+         'name', 'email', 'password', 'dni', 'telefono',
+@@ -32,46 +39,55 @@ class User extends Authenticatable
+         'aviso_password_mostrado' => 'boolean',
+     ];
+ 
++    /** @return BelongsTo<Cargo, $this> */
+     public function cargo(): BelongsTo
+     {
+         return $this->belongsTo(Cargo::class);
+     }
+ 
++    /** @return BelongsTo<Sede, $this> */
+     public function sede(): BelongsTo
+     {
+         return $this->belongsTo(Sede::class);
+     }
+ 
++    /** @return BelongsTo<User, $this> */
+     public function jefe(): BelongsTo
+     {
+         return $this->belongsTo(User::class, 'jefe_id');
+     }
+ 
++    /** @return HasMany<User, $this> */
+     public function subordinados(): HasMany
+     {
+         return $this->hasMany(User::class, 'jefe_id');
+     }
+ 
++    /** @return HasMany<Papeleta, $this> */
+     public function papeletas(): HasMany
+     {
+         return $this->hasMany(Papeleta::class, 'trabajador_id');
+     }
+ 
++    /** @return HasMany<Papeleta, $this> */
+     public function papeletasPorAprobar(): HasMany
+     {
+         return $this->hasMany(Papeleta::class, 'jefe_id');
+     }
+ 
++    /** @return HasMany<FlujoAprobacion, $this> */
+     public function flujoAprobaciones(): HasMany
+     {
+         return $this->hasMany(FlujoAprobacion::class, 'usuario_id');
+     }
+ 
++    /** @return HasMany<NotificacionSistema, $this> */
+     public function notificaciones(): HasMany
+     {
+         return $this->hasMany(NotificacionSistema::class);
+     }
+ 
++    /** @return HasMany<PushSubscription, $this> */
+     public function pushSubscriptions(): HasMany
+     {
+         return $this->hasMany(PushSubscription::class);
+diff --git a/app/Notifications/PapeletaFinalizadaNotification.php b/app/Notifications/PapeletaFinalizadaNotification.php
+index 8ebaa6a..028def0 100644
+--- a/app/Notifications/PapeletaFinalizadaNotification.php
++++ b/app/Notifications/PapeletaFinalizadaNotification.php
+@@ -61,7 +61,7 @@ public function toMail(object $notifiable): MailMessage
+         }
+ 
+         foreach ($this->papeleta->flujoAprobaciones as $flujo) {
+-            $mail->line("Aprobado por {$flujo->rol} — {$flujo->usuario?->name} ({$flujo->created_at->format('d/m/Y H:i')})");
++            $mail->line("Aprobado por {$flujo->rol} — {$flujo->usuario->name} ({$flujo->created_at->format('d/m/Y H:i')})");
+         }
+ 
+         return $mail
+@@ -71,7 +71,7 @@ public function toMail(object $notifiable): MailMessage
+ 
+     private function confirmadoPor($marcacion): string
+     {
+-        $nombre = $marcacion->registradoPor?->name ?? 'vigilante de la sede';
++        $nombre = $marcacion->registradoPor->name ?? 'vigilante de la sede';
+ 
+         return "✓ Confirmado en puerta por {$nombre}.";
+     }
+diff --git a/app/Support/ReporteSalidasCalculator.php b/app/Support/ReporteSalidasCalculator.php
+index 02ca578..8cedd1b 100644
+--- a/app/Support/ReporteSalidasCalculator.php
++++ b/app/Support/ReporteSalidasCalculator.php
+@@ -40,8 +40,9 @@ public static function rankingTrabajadores(Collection $papeletas): Collection
+         return $papeletas
+             ->groupBy('trabajador_id')
+             ->map(fn (Collection $grupo) => [
+-                'nombre' => $grupo->first()->trabajador?->name ?? 'Sin nombre',
+-                'area' => $grupo->first()->area?->nombre ?? '—',
++                'nombre' => $grupo->first()->trabajador->name ?? 'Sin nombre',
++                'area' => $grupo->first()->area->nombre ?? '—',
++                // @phpstan-ignore nullsafe.neverNull (jefe_id SÍ es nullable en la migración de papeletas; Larastan no modela la nulabilidad real del FK para relaciones BelongsTo y marca esto como falso positivo — quitar el ?-> aquí introduciría un null pointer real)
+                 'jefe' => $grupo->first()->jefe?->name ?? '—',
+                 'total' => $grupo->count(),
+             ])
+@@ -66,7 +67,7 @@ public static function cuadroTrabajadores(Collection $papeletas): Collection
+             ->groupBy('trabajador_id')
+             ->map(function (Collection $grupo) {
+                 $motivoTop = $grupo
+-                    ->groupBy(fn (Papeleta $p) => $p->motivo?->nombre ?? 'Sin motivo')
++                    ->groupBy(fn (Papeleta $p) => $p->motivo->nombre)
+                     ->map->count()
+                     ->sortDesc();
+ 
+@@ -88,8 +89,9 @@ public static function cuadroTrabajadores(Collection $papeletas): Collection
+                 $motivoTopTotal = $motivoTop->first() ?? 0;
+ 
+                 return [
+-                    'nombre' => $grupo->first()->trabajador?->name ?? 'Sin nombre',
+-                    'area' => $grupo->first()->area?->nombre ?? '—',
++                    'nombre' => $grupo->first()->trabajador->name ?? 'Sin nombre',
++                    'area' => $grupo->first()->area->nombre ?? '—',
++                    // @phpstan-ignore nullsafe.neverNull (jefe_id SÍ es nullable en la migración de papeletas; Larastan no modela la nulabilidad real del FK para relaciones BelongsTo y marca esto como falso positivo — quitar el ?-> aquí introduciría un null pointer real)
+                     'jefe' => $grupo->first()->jefe?->name ?? '—',
+                     'total' => $total,
+                     'motivo_top' => $motivoTop->keys()->first() ?? '—',
+@@ -112,7 +114,7 @@ public static function rankingAreas(Collection $papeletas): Collection
+         return $papeletas
+             ->groupBy('area_id')
+             ->map(fn (Collection $grupo) => [
+-                'nombre' => $grupo->first()->area?->nombre ?? 'Sin área',
++                'nombre' => $grupo->first()->area->nombre ?? 'Sin área',
+                 'total' => $grupo->count(),
+             ])
+             ->sortByDesc('total')
+@@ -146,8 +148,9 @@ public static function rankingHorasFuera(Collection $papeletas): Collection
+                 });
+ 
+                 return [
+-                    'nombre' => $grupo->first()->trabajador?->name ?? 'Sin nombre',
+-                    'area' => $grupo->first()->area?->nombre ?? '—',
++                    'nombre' => $grupo->first()->trabajador->name ?? 'Sin nombre',
++                    'area' => $grupo->first()->area->nombre ?? '—',
++                    // @phpstan-ignore nullsafe.neverNull (jefe_id SÍ es nullable en la migración de papeletas; Larastan no modela la nulabilidad real del FK para relaciones BelongsTo y marca esto como falso positivo — quitar el ?-> aquí introduciría un null pointer real)
+                     'jefe' => $grupo->first()->jefe?->name ?? '—',
+                     'horas' => round($segundos / 3600, 1),
+                 ];
+@@ -165,7 +168,7 @@ public static function motivosMasUsados(Collection $papeletas): Collection
+         return $papeletas
+             ->groupBy('motivo_id')
+             ->map(fn (Collection $grupo) => [
+-                'nombre' => $grupo->first()->motivo?->nombre ?? 'Sin motivo',
++                'nombre' => $grupo->first()->motivo->nombre ?? 'Sin motivo',
+                 'total' => $grupo->count(),
+             ])
+             ->sortByDesc('total')
+@@ -201,7 +204,7 @@ public static function horasPorMotivo(Collection $papeletas): Collection
+                 });
+ 
+                 return [
+-                    'nombre' => $grupo->first()->motivo?->nombre ?? 'Sin motivo',
++                    'nombre' => $grupo->first()->motivo->nombre ?? 'Sin motivo',
+                     'salidas_contabilizadas' => $grupo->count(),
+                     'horas' => round($horas, 1),
+                 ];
+diff --git a/phpstan.neon b/phpstan.neon
+index 78583b0..72cf221 100644
+--- a/phpstan.neon
++++ b/phpstan.neon
+@@ -8,4 +8,15 @@ parameters:
+     level: 5
+ 
+     checkOctaneCompatibility: false
+-    checkModelProperties: true
+\ No newline at end of file
++    checkModelProperties: true
++
++    ignoreErrors:
++        # Larastan exige que las keys del array coincidan con el union type
++        # exacto de propiedades fillable del modelo. En la práctica los
++        # arrays vienen de $request->validate()/validated() o de un método
++        # privado de validación local (ver *Controller::validarDatos()) —
++        # Eloquent ya valida $fillable en runtime, así que este chequeo
++        # solo genera fricción sin aportar seguridad real.
++        -
++            message: '#Parameter \#1 \$attributes of (static )?method Illuminate\\Database\\Eloquent\\(Builder|Model)(<[^>]+>)?::(create|update)\(\) expects array<model property of .+, mixed>, array(<string, mixed>)? given\.#'
++            identifier: argument.type
+\ No newline at end of file

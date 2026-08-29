@@ -21,11 +21,13 @@ class FlujoAprobacion extends Model
         'accion' => AccionFlujo::class,
     ];
 
+    /** @return BelongsTo<Papeleta, $this> */
     public function papeleta(): BelongsTo
     {
         return $this->belongsTo(Papeleta::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id');

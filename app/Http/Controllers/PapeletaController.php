@@ -17,7 +17,7 @@ use Illuminate\View\View;
 
 class PapeletaController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $user = $request->user();
 

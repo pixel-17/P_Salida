@@ -12,6 +12,7 @@ class Estado extends Model
 
     protected $fillable = ['codigo', 'nombre', 'color', 'orden'];
 
+    /** @return HasMany<Papeleta, $this> */
     public function papeletas(): HasMany
     {
         return $this->hasMany(Papeleta::class);

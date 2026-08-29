@@ -17,11 +17,13 @@ class Area extends Model
         'estado' => 'boolean',
     ];
 
+    /** @return HasMany<Cargo, $this> */
     public function cargos(): HasMany
     {
         return $this->hasMany(Cargo::class);
     }
 
+    /** @return HasMany<Papeleta, $this> */
     public function papeletas(): HasMany
     {
         return $this->hasMany(Papeleta::class);

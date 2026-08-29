@@ -13,6 +13,7 @@ use App\Models\User;
 use Database\Seeders\EstadoSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 /**
@@ -41,6 +42,15 @@ abstract class PapeletaActionTestCase extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Se congela el reloj a media mañana de un día laboral fijo: varias
+        // Actions de este flujo comparan now() contra
+        // Configuracion::horaLimiteGarita() (19:10) y contra
+        // hora_salida_programada/hora_retorno_programada. Sin esto, la
+        // suite se vuelve dependiente de a qué hora del día se ejecute (p.
+        // ej. falla real después de las 19:10 hora del servidor) sin que
+        // haya ningún bug de negocio de por medio.
+        Carbon::setTestNow(Carbon::parse('2026-08-24 10:00:00')); // lunes
 
         $this->seed(RoleSeeder::class);
         $this->seed(EstadoSeeder::class);
@@ -94,5 +104,12 @@ abstract class PapeletaActionTestCase extends TestCase
             'tipo' => TipoMarcacion::SALIDA->value,
             'registrado_por_user_id' => $this->vigilante->id,
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
     }
 }

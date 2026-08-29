@@ -21,11 +21,13 @@ class Observacion extends Model
         'atendida' => 'boolean',
     ];
 
+    /** @return BelongsTo<Papeleta, $this> */
     public function papeleta(): BelongsTo
     {
         return $this->belongsTo(Papeleta::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id');
@@ -38,6 +40,7 @@ class Observacion extends Model
      * reporte de sustentos para mostrar QUÉ documento respondió cada
      * solicitud, no solo si la papeleta tiene adjuntos en general.
      */
+    /** @return HasMany<Adjunto, $this> */
     public function adjuntos(): HasMany
     {
         return $this->hasMany(Adjunto::class);

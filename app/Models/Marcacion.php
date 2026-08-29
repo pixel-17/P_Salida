@@ -7,6 +7,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// @property explícito: sin esto, Larastan infiere created_at como
+// Carbon\Carbon (tipo base de doctrine/dbal) en vez de
+// Illuminate\Support\Carbon (el que Eloquent realmente instancia vía el
+// cast 'datetime'), y rompe el tipo de retorno declarado en cualquier
+// método que reenvíe este valor (ver Papeleta::finEfectivoParaHoras()).
+/**
+ * @property \Illuminate\Support\Carbon $created_at
+ */
 class Marcacion extends Model
 {
     use HasFactory;
@@ -21,13 +29,16 @@ class Marcacion extends Model
 
     protected $casts = [
         'tipo' => TipoMarcacion::class,
+        'created_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Papeleta, $this> */
     public function papeleta(): BelongsTo
     {
         return $this->belongsTo(Papeleta::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function registradoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'registrado_por_user_id');

@@ -16,21 +16,25 @@ class HistorialPapeleta extends Model
         'papeleta_id', 'usuario_id', 'accion', 'estado_anterior_id', 'estado_nuevo_id', 'descripcion',
     ];
 
+    /** @return BelongsTo<Papeleta, $this> */
     public function papeleta(): BelongsTo
     {
         return $this->belongsTo(Papeleta::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id');
     }
 
+    /** @return BelongsTo<Estado, $this> */
     public function estadoAnterior(): BelongsTo
     {
         return $this->belongsTo(Estado::class, 'estado_anterior_id');
     }
 
+    /** @return BelongsTo<Estado, $this> */
     public function estadoNuevo(): BelongsTo
     {
         return $this->belongsTo(Estado::class, 'estado_nuevo_id');

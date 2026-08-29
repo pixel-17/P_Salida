@@ -61,7 +61,7 @@ class PapeletaFinalizadaNotification extends Notification implements ShouldQueue
         }
 
         foreach ($this->papeleta->flujoAprobaciones as $flujo) {
-            $mail->line("Aprobado por {$flujo->rol} — {$flujo->usuario?->name} ({$flujo->created_at->format('d/m/Y H:i')})");
+            $mail->line("Aprobado por {$flujo->rol} — {$flujo->usuario->name} ({$flujo->created_at->format('d/m/Y H:i')})");
         }
 
         return $mail
@@ -71,7 +71,7 @@ class PapeletaFinalizadaNotification extends Notification implements ShouldQueue
 
     private function confirmadoPor($marcacion): string
     {
-        $nombre = $marcacion->registradoPor?->name ?? 'vigilante de la sede';
+        $nombre = $marcacion->registradoPor->name ?? 'vigilante de la sede';
 
         return "✓ Confirmado en puerta por {$nombre}.";
     }
