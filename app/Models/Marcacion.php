@@ -6,6 +6,7 @@ use App\Enums\TipoMarcacion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 // @property explícito: sin esto, Larastan infiere created_at como
 // Carbon\Carbon (tipo base de doctrine/dbal) en vez de
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 // cast 'datetime'), y rompe el tipo de retorno declarado en cualquier
 // método que reenvíe este valor (ver Papeleta::finEfectivoParaHoras()).
 /**
- * @property \Illuminate\Support\Carbon $created_at
+ * @property Carbon $created_at
  */
 class Marcacion extends Model
 {

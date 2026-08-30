@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * ReporteExcelExporter::sanitizarFila evita "fórmula injection" (CSV/Excel
  * Injection): si un nombre de trabajador/área/motivo empieza con =, +, -,
+ *
  * @ o un tab/retorno de carro, Excel lo interpreta como fórmula al abrir
  * el archivo en vez de como texto literal. Se prueba el método directo
  * (es privado, se invoca vía Reflection) para no depender de BD ni de

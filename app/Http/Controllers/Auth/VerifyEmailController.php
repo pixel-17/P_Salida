@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +20,7 @@ class VerifyEmailController extends Controller
         // que siempre hay un User autenticado aquí. Se estrecha el tipo
         // explícitamente para que Larastan sepa que implementa
         // MustVerifyEmail (lo exige el evento Verified) y no es nullable.
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = $request->user();
 
         if ($user->hasVerifiedEmail()) {

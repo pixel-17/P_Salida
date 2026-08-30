@@ -102,7 +102,23 @@
                 Reintentar cámara
             </button>
 
-            <p class="text-xs text-gray-400 mt-3 text-center">
+            {{-- Si la cámara falla, no obligamos al vigilante a cambiar de
+            pestaña para poder seguir trabajando: mismo input y mismo
+            buscar() que el modo "Buscar", pero visible aquí mismo. En el
+            momento de mayor presión (cola en la puerta) cambiar de tab es
+            fricción que sobra. --}}
+            <div x-show="errorCamara" x-cloak class="mt-3">
+                <label class="block text-sm font-medium text-gray-600 mb-1.5">O busca a mano</label>
+                <input
+                    type="text"
+                    x-model="q"
+                    @input.debounce.400ms="buscar()"
+                    placeholder="Ej: 45678912 o PAP-2026-00001"
+                    class="input-glass text-base"
+                >
+            </div>
+
+            <p x-show="!errorCamara" class="text-xs text-gray-400 mt-3 text-center">
                 Apunta al QR de la papeleta o al DNI del trabajador
             </p>
         </div>

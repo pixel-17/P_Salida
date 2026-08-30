@@ -11,6 +11,7 @@ use App\Models\Papeleta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -44,7 +45,12 @@ class VigilanteController extends Controller
 
         $request->validate(['q' => ['required', 'string', 'min:2', 'max:100']]);
 
-        $q = $request->input('q');
+        // Normalizado: el vigilante escribe rápido y bajo presión (cola en
+        // la puerta), un código puede llegar en minúsculas o con espacios
+        // sueltos ("pap-2026-00001 " en vez de "PAP-2026-00001"). El LIKE
+        // sobre nombre/DNI no depende de mayúsculas (collation), pero el
+        // trim evita fallos de búsqueda por espacios accidentales.
+        $q = Str::upper(trim($request->input('q')));
 
         $papeletas = Papeleta::query()
             ->where('sede_id', $request->user()->sede_id)
