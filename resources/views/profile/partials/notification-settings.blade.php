@@ -8,6 +8,25 @@
         cargando: false,
         mensaje: null,
 
+        sonidoOpciones: window.sonidoAvisoOpciones,
+        sonidoElegido: window.sonidoAvisoObtenerSonido(),
+        volumen: Math.round(window.sonidoAvisoObtenerVolumen() * 100),
+
+        cambiarSonido(id) {
+            this.sonidoElegido = id;
+            window.sonidoAvisoGuardarSonido(id);
+            window.sonidoAvisoProbar(id, this.volumen / 100);
+        },
+
+        cambiarVolumen(valor) {
+            this.volumen = valor;
+            window.sonidoAvisoGuardarVolumen(valor / 100);
+        },
+
+        probarSonido() {
+            window.sonidoAvisoProbar(this.sonidoElegido, this.volumen / 100);
+        },
+
         async refrescar() {
             const estado = await window.estadoNotificacionesPush();
             this.soportado = estado.soportado;
@@ -125,6 +144,53 @@
                     >
                         Activar notificaciones
                     </button>
+                </div>
+
+                {{-- Sonido de aviso: independiente del permiso de push, ya
+                que también suena para las notificaciones dentro de la app
+                (campanita del header) mientras la pestaña está abierta. --}}
+                <div class="pt-4 border-t border-gray-100">
+                    <div class="flex items-start gap-3 mb-3">
+                        <x-icon name="bell" class="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Sonido de aviso</p>
+                            <p class="text-sm text-gray-500 mt-0.5">Elige el tono y el volumen del aviso dentro de la app.</p>
+                        </div>
+                    </div>
+
+                    <div class="pl-8 space-y-3">
+                        <div class="flex flex-wrap gap-2">
+                            <template x-for="opcion in sonidoOpciones" :key="opcion.id">
+                                <button
+                                    type="button"
+                                    @click="cambiarSonido(opcion.id)"
+                                    :class="sonidoElegido === opcion.id
+                                        ? 'bg-brand-600 text-white border-brand-600'
+                                        : 'bg-white/60 text-gray-600 border-gray-200 hover:bg-white'"
+                                    class="text-xs font-medium px-3 py-1.5 rounded-full border transition-colors"
+                                    x-text="opcion.etiqueta"
+                                ></button>
+                            </template>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.59-.71-1.59-1.59v-4.32c0-.88.71-1.59 1.59-1.59h2.24z" />
+                            </svg>
+                            <input
+                                type="range" min="0" max="100" step="5"
+                                :value="volumen"
+                                @input="cambiarVolumen(Number($event.target.value))"
+                                @change="probarSonido()"
+                                class="w-full accent-brand-600"
+                            >
+                            <span class="text-xs text-gray-500 w-9 text-right" x-text="volumen + '%'"></span>
+                        </div>
+
+                        <button type="button" class="btn-secondary text-xs !py-1.5 !px-3" @click="probarSonido()">
+                            Probar sonido
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Instalar app (PWA) --}}

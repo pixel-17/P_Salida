@@ -37,28 +37,12 @@
                             Haz clic aquí para reenviar el correo de verificación.
                         </button>
                     </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-emerald-600">
-                            Se ha enviado un nuevo enlace de verificación a tu correo.
-                        </p>
-                    @endif
                 </div>
             @endif
         </div>
 
         <div class="flex items-center gap-4">
             <x-primary-button>Guardar</x-primary-button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-emerald-600 font-medium"
-                >Guardado.</p>
-            @endif
         </div>
     </form>
 </section>

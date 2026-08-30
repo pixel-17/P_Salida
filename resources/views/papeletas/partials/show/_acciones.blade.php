@@ -23,6 +23,7 @@
         <form method="POST" action="{{ route('papeletas.rechazar', $papeleta) }}" class="space-y-2">
             @csrf
             <textarea name="comentario" required placeholder="Motivo del rechazo" class="input-glass text-sm" rows="2"></textarea>
+            <x-input-error :messages="$errors->get('comentario')" />
             <button class="btn-danger w-full justify-center">Rechazar</button>
         </form>
 
@@ -32,7 +33,9 @@
                 <option value="ADMINISTRATIVA">Observación administrativa</option>
                 <option value="JUSTIFICACION">Requiere justificación</option>
             </select>
+            <x-input-error :messages="$errors->get('tipo')" />
             <textarea name="comentario" required placeholder="Detalle de la observación" class="input-glass text-sm" rows="2"></textarea>
+            <x-input-error :messages="$errors->get('comentario')" />
             <button class="btn-glass text-white shadow-glass w-full justify-center" style="background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);">Observar</button>
         </form>
     </div>

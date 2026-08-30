@@ -13,18 +13,22 @@
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Nombre completo</label>
             <input type="text" name="name" required value="{{ old('name') }}" class="input-glass">
+            <x-input-error :messages="$errors->get('name')" />
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Email</label>
             <input type="email" name="email" required value="{{ old('email') }}" class="input-glass">
+            <x-input-error :messages="$errors->get('email')" />
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">DNI</label>
             <input type="text" name="dni" required maxlength="8" value="{{ old('dni') }}" class="input-glass">
+            <x-input-error :messages="$errors->get('dni')" />
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Teléfono</label>
             <input type="text" name="telefono" value="{{ old('telefono') }}" class="input-glass">
+            <x-input-error :messages="$errors->get('telefono')" />
         </div>
         <div class="rounded-lg bg-brand-50 border border-brand-100 px-3 py-2.5 text-xs text-brand-700">
             La contraseña inicial será su número de DNI. Se le pedirá cambiarla al iniciar sesión por primera vez.
@@ -37,6 +41,7 @@
                     <option value="{{ $rol->value }}" @selected(old('rol') === $rol->value)>{{ $rol->label() }}</option>
                 @endforeach
             </select>
+            <x-input-error :messages="$errors->get('rol')" />
         </div>
         <div x-show="rol !== 'VIGILANTE'" x-cloak>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Cargo</label>
@@ -46,6 +51,7 @@
                     <option value="{{ $cargo->id }}" @selected(old('cargo_id') == $cargo->id)>{{ $cargo->nombre }}</option>
                 @endforeach
             </select>
+            <x-input-error :messages="$errors->get('cargo_id')" />
         </div>
         <div x-show="!['RRHH', 'ADMINISTRADOR'].includes(rol)" x-cloak>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">
@@ -66,6 +72,7 @@
             <p x-show="rol === 'VIGILANTE'" x-cloak class="text-xs text-gray-400 mt-1">
                 Obligatoria: define en qué puerta puede confirmar salidas/retornos.
             </p>
+            <x-input-error :messages="$errors->get('sede_id')" />
         </div>
         <div x-show="rol === 'TRABAJADOR'" x-cloak>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Jefe inmediato</label>
@@ -79,6 +86,7 @@
             <p class="text-xs text-gray-400 mt-1">
                 La sede del trabajador se asigna automáticamente: siempre es la misma que la del jefe elegido.
             </p>
+            <x-input-error :messages="$errors->get('jefe_id')" />
         </div>
 
         <div class="flex gap-3 pt-1">

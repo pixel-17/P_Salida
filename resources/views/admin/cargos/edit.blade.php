@@ -12,10 +12,12 @@
                     <option value="{{ $area->id }}" @selected(old('area_id', $cargo->area_id) == $area->id)>{{ $area->nombre }}</option>
                 @endforeach
             </select>
+            <x-input-error :messages="$errors->get('area_id')" />
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Nombre</label>
             <input type="text" name="nombre" required value="{{ old('nombre', $cargo->nombre) }}" class="input-glass">
+            <x-input-error :messages="$errors->get('nombre')" />
         </div>
         <div class="flex items-center gap-2">
             <input type="hidden" name="estado" value="0">

@@ -8,19 +8,23 @@
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Nombre</label>
             <input type="text" name="nombre" required value="{{ old('nombre', $sede->nombre) }}" class="input-glass">
+            <x-input-error :messages="$errors->get('nombre')" />
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Dirección</label>
             <input type="text" name="direccion" value="{{ old('direccion', $sede->direccion) }}" class="input-glass">
+            <x-input-error :messages="$errors->get('direccion')" />
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div>
                 <label class="block font-semibold text-sm text-gray-600 mb-1.5">Latitud</label>
                 <input type="number" step="any" name="latitud" required value="{{ old('latitud', $sede->latitud) }}" class="input-glass">
+                <x-input-error :messages="$errors->get('latitud')" />
             </div>
             <div>
                 <label class="block font-semibold text-sm text-gray-600 mb-1.5">Longitud</label>
                 <input type="number" step="any" name="longitud" required value="{{ old('longitud', $sede->longitud) }}" class="input-glass">
+                <x-input-error :messages="$errors->get('longitud')" />
             </div>
         </div>
         <div class="flex items-center gap-2">

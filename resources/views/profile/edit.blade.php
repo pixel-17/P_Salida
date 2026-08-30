@@ -24,6 +24,23 @@
             @include('profile.partials.update-password-form')
         </div>
 
+        @if ($user->jefe)
+            <div class="glass-panel p-6 sm:p-8">
+                <section class="flex items-center gap-3">
+                    <x-icon name="user-circle" class="w-5 h-5 text-gray-400 shrink-0" />
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800">Tu jefe inmediato</h2>
+                        <p class="mt-1 text-sm text-gray-500">
+                            {{ $user->jefe->name }}
+                            @if ($user->jefe->sede)
+                                — {{ $user->jefe->sede->nombre }}
+                            @endif
+                        </p>
+                    </div>
+                </section>
+            </div>
+        @endif
+
         <div class="glass-panel p-6 sm:p-8">
             @include('profile.partials.notification-settings')
         </div>

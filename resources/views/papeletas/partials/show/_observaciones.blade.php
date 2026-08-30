@@ -34,6 +34,7 @@
                     @csrf
                     <textarea name="respuesta" required placeholder="Escribe tu respuesta a la observación..."
                               class="input-glass text-sm" rows="3"></textarea>
+                    <x-input-error :messages="$errors->get('respuesta')" />
                     <button class="btn-primary w-full justify-center">Enviar respuesta</button>
                     <p class="text-xs text-gray-400">Al responder, tu papeleta vuelve a revisión de quien la observó.</p>
                 </form>

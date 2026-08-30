@@ -45,20 +45,15 @@
             contenedor.innerHTML = nuevo.innerHTML;
             iniciarTiempoEsperaWatcher();
 
-            // Los mensajes flash (session status/error) van en el layout,
+            // El mensaje flash de éxito (session status) va en el layout,
             // fuera de este contenedor — no hay navegación real así que no
-            // se ven solos: se muestran como toast.
+            // se ve solo: se muestra como toast. Los errores de validación
+            // ya vienen renderizados campo por campo dentro del fragmento
+            // que se acaba de inyectar arriba (contenedor.innerHTML), así
+            // que no hace falta un toast aparte para ellos.
             const flashStatus = doc.getElementById('flash-status');
-            const flashError = doc.getElementById('flash-error');
             if (flashStatus && window.toastAccion) {
                 window.toastAccion(flashStatus.textContent.trim(), 'ok');
-            }
-            if (flashError && window.toastAccion) {
-                // Puede traer varios <li> (uno por campo con error, p. ej. al
-                // subir un documento que no cumple tipo/tamaño): se listan
-                // separados por "; " en vez de quedar todos pegados.
-                const items = Array.from(flashError.querySelectorAll('li')).map(li => li.textContent.trim());
-                window.toastAccion(items.length ? items.join('; ') : flashError.textContent.trim(), 'error');
             }
 
             return true;

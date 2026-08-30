@@ -8,14 +8,17 @@
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Nombre</label>
             <input type="text" name="nombre" required value="{{ old('nombre') }}" class="input-glass">
+            <x-input-error :messages="$errors->get('nombre')" />
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Siglas</label>
             <input type="text" name="siglas" value="{{ old('siglas') }}" class="input-glass">
+            <x-input-error :messages="$errors->get('siglas')" />
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Descripción</label>
             <textarea name="descripcion" rows="3" class="input-glass">{{ old('descripcion') }}</textarea>
+            <x-input-error :messages="$errors->get('descripcion')" />
         </div>
         <div class="flex gap-3 pt-1">
             <button type="submit" class="btn-primary">Guardar</button>

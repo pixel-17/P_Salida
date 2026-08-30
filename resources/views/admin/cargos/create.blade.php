@@ -13,10 +13,12 @@
                     <option value="{{ $area->id }}" @selected(old('area_id') == $area->id)>{{ $area->nombre }}</option>
                 @endforeach
             </select>
+            <x-input-error :messages="$errors->get('area_id')" />
         </div>
         <div>
             <label class="block font-semibold text-sm text-gray-600 mb-1.5">Nombre</label>
             <input type="text" name="nombre" required value="{{ old('nombre') }}" class="input-glass">
+            <x-input-error :messages="$errors->get('nombre')" />
         </div>
         <div class="flex gap-3 pt-1">
             <button type="submit" class="btn-primary">Guardar</button>

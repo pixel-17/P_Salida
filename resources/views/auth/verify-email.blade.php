@@ -7,9 +7,9 @@
         </p>
     </div>
 
-    @if (session('status') == 'verification-link-sent')
+    @if (session('status'))
         <div class="mb-5 font-medium text-sm text-emerald-700 bg-emerald-50/80 rounded-xl px-4 py-2.5">
-            Te enviamos un nuevo enlace de verificación al correo que registraste.
+            {{ session('status') }}
         </div>
     @endif
 

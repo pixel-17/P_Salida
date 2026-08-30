@@ -142,16 +142,6 @@
                         </div>
                     @endif
 
-                    @if ($errors->any())
-                        <div id="flash-error" class="glass-card border-l-4 !border-l-rose-400 text-rose-700 text-sm p-4 mb-4 animate-fade-in-up">
-                            <ul class="list-disc pl-4 space-y-0.5">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
                     @if ($usuario->must_change_password && ! $usuario->aviso_password_mostrado)
                         @php
                             $usuario->marcarAvisoPasswordMostrado();
@@ -194,16 +184,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                     {{ session('status') }}
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div id="flash-error" class="glass-card border-l-4 !border-l-rose-400 text-rose-700 text-sm p-4 mb-4 animate-fade-in-up">
-                    <ul class="list-disc pl-4 space-y-0.5">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
                 </div>
             @endif
 

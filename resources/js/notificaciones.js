@@ -24,14 +24,92 @@
 
 const INTERVALO_MS = 12000;
 
+const VOLUMEN_KEY = 'papeletas_sonido_volumen';
+const SONIDO_KEY = 'papeletas_sonido_tipo';
+
+function obtenerVolumen() {
+    const guardado = parseFloat(localStorage.getItem(VOLUMEN_KEY));
+    return Number.isFinite(guardado) ? Math.min(1, Math.max(0, guardado)) : 0.6;
+}
+
+function guardarVolumen(valor) {
+    localStorage.setItem(VOLUMEN_KEY, String(Math.min(1, Math.max(0, valor))));
+}
+
+function obtenerSonido() {
+    return localStorage.getItem(SONIDO_KEY) || 'campanita';
+}
+
+function guardarSonido(id) {
+    localStorage.setItem(SONIDO_KEY, id);
+}
+
 /**
- * Campanita sintetizada con Web Audio API: arpegio ascendente de 3 notas
- * (acorde mayor Do-Mi-Sol), onda triangular pasada por un filtro pasa-bajos
- * para redondear el timbre. Se genera en el navegador: no depende de
- * ningún archivo de audio externo.
+ * Todas las variantes se sintetizan con Web Audio API: ningún archivo de
+ * audio externo, cero peso extra en el bundle. `pico` es el volumen máximo
+ * de cada nota antes de aplicar el multiplicador de volumen del usuario
+ * (0-1, guardado en localStorage) — cada sonido trae su propio balance
+ * relativo entre notas, el usuario solo sube/baja el conjunto.
  */
-function reproducirSonidoAviso() {
+const SONIDOS = {
+    // Campanita: arpegio ascendente Do-Mi-Sol, onda triangular + pasa-bajos.
+    // El sonido original de la app.
+    campanita: {
+        etiqueta: 'Campanita',
+        notas: [
+            { frecuencia: 523.25, inicio: 0, duracion: 0.35, pico: 0.16 },
+            { frecuencia: 659.25, inicio: 0.09, duracion: 0.35, pico: 0.16 },
+            { frecuencia: 783.99, inicio: 0.18, duracion: 0.35, pico: 0.16 },
+        ],
+        onda: 'triangle',
+        pasaBajos: 4000,
+    },
+    // Suave: una sola nota cálida, ataque lento, decaimiento largo — casi
+    // imperceptible en volumen bajo, agradable para oficina.
+    suave: {
+        etiqueta: 'Suave',
+        notas: [
+            { frecuencia: 440, inicio: 0, duracion: 0.6, pico: 0.18 },
+        ],
+        onda: 'sine',
+        pasaBajos: 2500,
+    },
+    // Xilófono: dos notas cortas y brillantes, ataque rápido.
+    xilofono: {
+        etiqueta: 'Xilófono',
+        notas: [
+            { frecuencia: 987.77, inicio: 0, duracion: 0.2, pico: 0.14 },
+            { frecuencia: 1318.51, inicio: 0.08, duracion: 0.22, pico: 0.14 },
+        ],
+        onda: 'triangle',
+        pasaBajos: 5000,
+    },
+    // Marimba: acorde descendente de 3 notas, tono grave y redondo.
+    marimba: {
+        etiqueta: 'Marimba',
+        notas: [
+            { frecuencia: 392.0, inicio: 0, duracion: 0.45, pico: 0.18 },
+            { frecuencia: 329.63, inicio: 0.1, duracion: 0.45, pico: 0.16 },
+            { frecuencia: 261.63, inicio: 0.2, duracion: 0.5, pico: 0.16 },
+        ],
+        onda: 'sine',
+        pasaBajos: 1800,
+    },
+};
+
+/**
+ * Reproduce el sonido de aviso elegido por el usuario (localStorage), al
+ * volumen que también eligió. `idSonido` y `volumen` son opcionales: si no
+ * se pasan, se usan las preferencias guardadas — así `probarSonido()` (el
+ * botón "Probar" en Notificaciones y app) puede previsualizar una
+ * combinación sin haberla guardado todavía.
+ */
+function reproducirSonidoAviso(idSonido, volumen) {
     try {
+        const definicion = SONIDOS[idSonido || obtenerSonido()] || SONIDOS.campanita;
+        const multiplicador = volumen ?? obtenerVolumen();
+        if (multiplicador <= 0) return;
+
         const Ctx = window.AudioContext || window.webkitAudioContext;
         const ctx = new Ctx();
         const ahora = ctx.currentTime;
@@ -40,35 +118,41 @@ function reproducirSonidoAviso() {
         // Con el filtro queda cálida, como una campanita, no un beep.
         const filtro = ctx.createBiquadFilter();
         filtro.type = 'lowpass';
-        filtro.frequency.value = 4000;
+        filtro.frequency.value = definicion.pasaBajos;
         filtro.connect(ctx.destination);
 
-        // Do5 - Mi5 - Sol5: acorde mayor ascendente, sensación "positiva"
-        // (el mismo recurso que usan la mayoría de sonidos de notificación
-        // de apps de mensajería), en vez del beep de dos tonos anterior.
-        [523.25, 659.25, 783.99].forEach((frecuencia, i) => {
+        definicion.notas.forEach((nota) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
 
-            osc.type = 'triangle';
-            osc.frequency.value = frecuencia;
+            osc.type = definicion.onda;
+            osc.frequency.value = nota.frecuencia;
 
-            const inicio = ahora + i * 0.09;
+            const inicio = ahora + nota.inicio;
             gain.gain.setValueAtTime(0, inicio);
-            gain.gain.linearRampToValueAtTime(0.16, inicio + 0.015);
-            gain.gain.exponentialRampToValueAtTime(0.001, inicio + 0.35);
+            gain.gain.linearRampToValueAtTime(nota.pico * multiplicador, inicio + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.001, inicio + nota.duracion);
 
             osc.connect(gain).connect(filtro);
             osc.start(inicio);
-            osc.stop(inicio + 0.4);
+            osc.stop(inicio + nota.duracion + 0.05);
         });
 
-        setTimeout(() => ctx.close(), 700);
+        setTimeout(() => ctx.close(), 900);
     } catch (e) {
         // Navegadores que bloquean audio sin interacción previa: se ignora,
         // la campana/contador ya se actualizó visualmente igual.
     }
 }
+
+// Expuesto global: lo usa el panel "Notificaciones y app" del perfil para
+// el slider de volumen, el selector de sonido y el botón "Probar".
+window.sonidoAvisoOpciones = Object.entries(SONIDOS).map(([id, def]) => ({ id, etiqueta: def.etiqueta }));
+window.sonidoAvisoObtenerVolumen = obtenerVolumen;
+window.sonidoAvisoGuardarVolumen = guardarVolumen;
+window.sonidoAvisoObtenerSonido = obtenerSonido;
+window.sonidoAvisoGuardarSonido = guardarSonido;
+window.sonidoAvisoProbar = (idSonido, volumen) => reproducirSonidoAviso(idSonido, volumen);
 
 function formatoRelativo(fechaIso) {
     const diffMs = Date.now() - new Date(fechaIso).getTime();

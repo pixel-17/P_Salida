@@ -3,12 +3,6 @@
         <h2 class="font-bold text-2xl text-gray-800 tracking-tight">Configuración general</h2>
     </x-slot>
 
-    @if (session('status'))
-        <div class="max-w-lg mb-4 rounded-lg bg-green-50 text-green-700 text-sm px-4 py-2.5">
-            {{ session('status') }}
-        </div>
-    @endif
-
     <form method="POST" action="{{ route('configuracion.update') }}" class="glass-panel p-6 space-y-5 max-w-lg animate-fade-in-up">
         @csrf @method('PUT')
 
@@ -19,11 +13,13 @@
                     <label class="block font-semibold text-sm text-gray-600 mb-1.5">Inicio de jornada</label>
                     <input type="time" name="horario_laboral_inicio" required
                         value="{{ old('horario_laboral_inicio', $horarioInicio) }}" class="input-glass">
+                    <x-input-error :messages="$errors->get('horario_laboral_inicio')" />
                 </div>
                 <div>
                     <label class="block font-semibold text-sm text-gray-600 mb-1.5">Fin de jornada</label>
                     <input type="time" name="horario_laboral_fin" required
                         value="{{ old('horario_laboral_fin', $horarioFin) }}" class="input-glass">
+                    <x-input-error :messages="$errors->get('horario_laboral_fin')" />
                 </div>
             </div>
             <p class="text-xs text-gray-500 mt-1.5">Solo se podrán registrar salidas programadas dentro de este rango. El vigilante podrá confirmar salidas y retornos en garita hasta 10 minutos después del fin de jornada.</p>
