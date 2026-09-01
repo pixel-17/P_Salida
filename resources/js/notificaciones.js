@@ -25,7 +25,6 @@
 const INTERVALO_MS = 12000;
 
 const VOLUMEN_KEY = 'papeletas_sonido_volumen';
-const SONIDO_KEY = 'papeletas_sonido_tipo';
 
 function obtenerVolumen() {
     const guardado = parseFloat(localStorage.getItem(VOLUMEN_KEY));
@@ -36,77 +35,37 @@ function guardarVolumen(valor) {
     localStorage.setItem(VOLUMEN_KEY, String(Math.min(1, Math.max(0, valor))));
 }
 
-function obtenerSonido() {
-    return localStorage.getItem(SONIDO_KEY) || 'campanita';
-}
-
-function guardarSonido(id) {
-    localStorage.setItem(SONIDO_KEY, id);
-}
-
 /**
- * Todas las variantes se sintetizan con Web Audio API: ningún archivo de
- * audio externo, cero peso extra en el bundle. `pico` es el volumen máximo
- * de cada nota antes de aplicar el multiplicador de volumen del usuario
- * (0-1, guardado en localStorage) — cada sonido trae su propio balance
- * relativo entre notas, el usuario solo sube/baja el conjunto.
+ * Sonido de aviso: reconstruido en Web Audio API a partir de un mp3 de
+ * referencia que pasó el usuario (tono de notificación de un widget de
+ * live chat), analizando su espectro — no es el archivo, es la misma
+ * "receta" tocada con dos osciloscopios. Dos notas sinusoidales puras
+ * (sin armónicos: se confirmó vía FFT que no es triángulo/cuadrada),
+ * la segunda una octava justa arriba de la primera y mucho más sostenida
+ * — el clásico "ding... DING" de aviso de mensaje:
+ *   - Nota 1: D6 (1174.66 Hz), ataque ~15ms, decae en ~0.18s.
+ *   - Nota 2: D7 (2349.32 Hz, la octava), entra ~0.174s después del
+ *     inicio de la nota 1 (justo cuando esta ya bajó de volumen), decae
+ *     mucho más lento, ~0.9s — es la que se queda "sonando" al final.
+ * `pico` en cada nota es el volumen máximo de esa nota antes de aplicar
+ * el multiplicador de volumen del usuario (0-1, guardado en localStorage).
  */
-const SONIDOS = {
-    // Campanita: arpegio ascendente Do-Mi-Sol, onda triangular + pasa-bajos.
-    // El sonido original de la app.
-    campanita: {
-        etiqueta: 'Campanita',
-        notas: [
-            { frecuencia: 523.25, inicio: 0, duracion: 0.35, pico: 0.16 },
-            { frecuencia: 659.25, inicio: 0.09, duracion: 0.35, pico: 0.16 },
-            { frecuencia: 783.99, inicio: 0.18, duracion: 0.35, pico: 0.16 },
-        ],
-        onda: 'triangle',
-        pasaBajos: 4000,
-    },
-    // Suave: una sola nota cálida, ataque lento, decaimiento largo — casi
-    // imperceptible en volumen bajo, agradable para oficina.
-    suave: {
-        etiqueta: 'Suave',
-        notas: [
-            { frecuencia: 440, inicio: 0, duracion: 0.6, pico: 0.18 },
-        ],
-        onda: 'sine',
-        pasaBajos: 2500,
-    },
-    // Xilófono: dos notas cortas y brillantes, ataque rápido.
-    xilofono: {
-        etiqueta: 'Xilófono',
-        notas: [
-            { frecuencia: 987.77, inicio: 0, duracion: 0.2, pico: 0.14 },
-            { frecuencia: 1318.51, inicio: 0.08, duracion: 0.22, pico: 0.14 },
-        ],
-        onda: 'triangle',
-        pasaBajos: 5000,
-    },
-    // Marimba: acorde descendente de 3 notas, tono grave y redondo.
-    marimba: {
-        etiqueta: 'Marimba',
-        notas: [
-            { frecuencia: 392.0, inicio: 0, duracion: 0.45, pico: 0.18 },
-            { frecuencia: 329.63, inicio: 0.1, duracion: 0.45, pico: 0.16 },
-            { frecuencia: 261.63, inicio: 0.2, duracion: 0.5, pico: 0.16 },
-        ],
-        onda: 'sine',
-        pasaBajos: 1800,
-    },
+const SONIDO = {
+    notas: [
+        { frecuencia: 1174.66, inicio: 0, duracion: 0.18, pico: 0.20 },
+        { frecuencia: 2349.32, inicio: 0.174, duracion: 0.9, pico: 0.22 },
+    ],
+    onda: 'sine',
 };
 
 /**
- * Reproduce el sonido de aviso elegido por el usuario (localStorage), al
- * volumen que también eligió. `idSonido` y `volumen` son opcionales: si no
- * se pasan, se usan las preferencias guardadas — así `probarSonido()` (el
- * botón "Probar" en Notificaciones y app) puede previsualizar una
- * combinación sin haberla guardado todavía.
+ * Reproduce el sonido de aviso al volumen que el usuario eligió. `volumen`
+ * es opcional: si no se pasa, se usa la preferencia guardada — así
+ * `probarSonido()` (el botón "Probar" en Notificaciones y app) puede
+ * previsualizar un volumen sin haberlo guardado todavía.
  */
-function reproducirSonidoAviso(idSonido, volumen) {
+function reproducirSonidoAviso(volumen) {
     try {
-        const definicion = SONIDOS[idSonido || obtenerSonido()] || SONIDOS.campanita;
         const multiplicador = volumen ?? obtenerVolumen();
         if (multiplicador <= 0) return;
 
@@ -114,18 +73,11 @@ function reproducirSonidoAviso(idSonido, volumen) {
         const ctx = new Ctx();
         const ahora = ctx.currentTime;
 
-        // Pasa-bajos suave: sin esto, la onda triangular suena metálica.
-        // Con el filtro queda cálida, como una campanita, no un beep.
-        const filtro = ctx.createBiquadFilter();
-        filtro.type = 'lowpass';
-        filtro.frequency.value = definicion.pasaBajos;
-        filtro.connect(ctx.destination);
-
-        definicion.notas.forEach((nota) => {
+        SONIDO.notas.forEach((nota) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
 
-            osc.type = definicion.onda;
+            osc.type = SONIDO.onda;
             osc.frequency.value = nota.frecuencia;
 
             const inicio = ahora + nota.inicio;
@@ -133,12 +85,12 @@ function reproducirSonidoAviso(idSonido, volumen) {
             gain.gain.linearRampToValueAtTime(nota.pico * multiplicador, inicio + 0.015);
             gain.gain.exponentialRampToValueAtTime(0.001, inicio + nota.duracion);
 
-            osc.connect(gain).connect(filtro);
+            osc.connect(gain).connect(ctx.destination);
             osc.start(inicio);
             osc.stop(inicio + nota.duracion + 0.05);
         });
 
-        setTimeout(() => ctx.close(), 900);
+        setTimeout(() => ctx.close(), 1200);
     } catch (e) {
         // Navegadores que bloquean audio sin interacción previa: se ignora,
         // la campana/contador ya se actualizó visualmente igual.
@@ -146,13 +98,10 @@ function reproducirSonidoAviso(idSonido, volumen) {
 }
 
 // Expuesto global: lo usa el panel "Notificaciones y app" del perfil para
-// el slider de volumen, el selector de sonido y el botón "Probar".
-window.sonidoAvisoOpciones = Object.entries(SONIDOS).map(([id, def]) => ({ id, etiqueta: def.etiqueta }));
+// el slider de volumen y el botón "Probar".
 window.sonidoAvisoObtenerVolumen = obtenerVolumen;
 window.sonidoAvisoGuardarVolumen = guardarVolumen;
-window.sonidoAvisoObtenerSonido = obtenerSonido;
-window.sonidoAvisoGuardarSonido = guardarSonido;
-window.sonidoAvisoProbar = (idSonido, volumen) => reproducirSonidoAviso(idSonido, volumen);
+window.sonidoAvisoProbar = (volumen) => reproducirSonidoAviso(volumen);
 
 function formatoRelativo(fechaIso) {
     const diffMs = Date.now() - new Date(fechaIso).getTime();
